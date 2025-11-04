@@ -1,0 +1,21 @@
+{
+  "name": "CGaaaaaa/async-best-practices",
+  "version": "0.1.0",
+  "deps": {
+    "moonbitlang/async": "0.10.4"
+  },
+  "readme": "README.mbt.md",
+  "repository": "https://github.com/CGaaaaaa/Async_best_practices",
+  "license": "Apache-2.0",
+  "keywords": [
+    "async",
+    "best-practices",
+    "moonbit",
+    "examples",
+    "timeout",
+    "retry",
+    "semaphore",
+    "queue"
+  ],
+  "description": "Async 最佳实践示例与文档：任务组、超时/取消、重试、队列/管道、信号量等"
+}
