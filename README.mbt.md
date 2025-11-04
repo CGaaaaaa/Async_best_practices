@@ -8,6 +8,11 @@
 
 更多系统化讲解请阅读：`docs/best_practices.mbt.md`
 
+## 环境要求
+
+- 已安装 MoonBit 工具链（参考官方文档 `https://docs.moonbitlang.com`）
+- 推荐使用 native 目标；macOS 建议安装 Xcode Command Line Tools 以确保 C 工具链可用
+
 ## 快速开始
 
 1) 在模块 `moon.mod.json` 中加入依赖：
@@ -15,7 +20,7 @@
 ```json
 {
   "deps": {
-    "moonbitlang/async": "^0.10.0"
+    "moonbitlang/async": "^0.10.4"
   }
 }
 ```
@@ -99,6 +104,9 @@ moon test --target native
 - 运行：`moon test --target native`
 - 行为变更后更新快照：`moon test --target native --update`
 
+- 开发常用：`moon info && moon fmt` 更新接口与格式化代码
+- 质量检查：`moon check` 静态检查；`moon coverage analyze > uncovered.log` 查看覆盖率薄弱点
+
 ## 目标说明
 
 - 上游 `moonbitlang/async` 内部使用 C FFI，`wasm-gc` 目前不支持
@@ -126,6 +134,14 @@ moon publish
 ```
 
 注意：`name` 前缀需为你的 Mooncakes 用户名；建议仓库名和模块名使用小写连字符风格。
+
+## Git hooks（可选）
+
+启用本仓库随附的 pre-commit 钩子以统一格式与基本检查：
+
+```bash
+git config core.hooksPath .githooks
+```
 
 ## 进一步阅读
 
