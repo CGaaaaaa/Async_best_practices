@@ -1,4 +1,57 @@
 ///|
+async test "hello_async" {
+  let result = hello_async()
+  inspect(result, content="Hello, Async!")
+}
+
+///|
+async test "concurrent_tasks" {
+  let result = concurrent_tasks()
+  inspect(result, content="[1, 2, 3]")
+}
+
+///|
+async test "timeout_example" {
+  let result = timeout_example()
+  inspect(result, content="Task timed out after 50ms")
+}
+
+///|
+async test "sequential_pipeline" {
+  let result = sequential_pipeline()
+  inspect(result, content="84")
+}
+
+///|
+async test "race_example" {
+  let result = race_example()
+  inspect(result, content="Task 2 finished")
+}
+
+///|
+async test "retry_example" {
+  let result = retry_example()
+  inspect(
+    result,
+    content=(
+      #|Ok("Success on attempt 2")
+    ),
+  )
+}
+
+///|
+async test "error_handling_example" {
+  let result = error_handling_example()
+  inspect(result, content="Main task completed successfully")
+}
+
+///|
+async test "batch_processing" {
+  let result = batch_processing()
+  inspect(result, content="[1, 4, 9, 16, 25]")
+}
+
+///|
 async test "demo_spawn" {
   let out = demo_spawn()
   inspect(
