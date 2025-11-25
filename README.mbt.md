@@ -5,9 +5,9 @@
 ## 🎯 项目亮点
 
 - 🎉 **100% API 覆盖率**（28/28 API，完整覆盖！）
-- ✅ **24 个完整示例**（入门 8 个 + 高级 16 个）
+- ✅ **25 个完整示例**（入门 8 个 + 高级 17 个，其中 1 个为业务综合示例）
 - ✅ **100% 测试通过率**（所有示例均有快照测试）
-- ✅ **1257 行精心设计的代码**
+- ✅ **约 1600 行精心设计的代码**
 
 ## 📁 项目结构
 
@@ -57,7 +57,7 @@ moon test --target native
 
 ## 核心示例（文件：`src/Async_best_practices.mbt`）
 
-本文件包含 24 个完整示例，涵盖从入门到高级的各种异步编程模式。
+本文件包含 25 个完整示例，涵盖从入门到高级的各种异步编程模式，其中新增 1 个“下单+支付”业务综合场景示例，演示如何在真实业务流程中组合使用重试与超时。
 
 ### 入门示例（示例 1-8）
 
@@ -70,7 +70,7 @@ moon test --target native
 - 错误处理：`error_handling_example`
 - 批量处理：`batch_processing`
 
-### 高级示例（示例 9-24）
+### 高级示例（示例 9-25）
 
 - 结构化并发：`demo_spawn`
   - 使用 `@async.with_task_group(fn(root) { ... })` 管理任务作用域
@@ -121,6 +121,10 @@ moon test --target native
 - 组级清理：`demo_group_defer`
   - `TaskGroup::add_defer(async () -> Unit)` 提供结构化清理
   - 与 `defer`、取消传播协作，顺序可预测（FILO）
+
+- 业务综合场景：`demo_business_checkout_flow`
+  - 模拟“下单+支付”流程，组合使用 `with_timeout_opt` 与 `retry(ExponentialDelay)`
+  - 展示如何把基础设施能力封装进业务流程
 
 运行这些示例的测试可直观看到事件时间线与预期输出。
 

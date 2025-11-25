@@ -322,3 +322,23 @@ async test "demo_queue_try_get_nonblocking" {
     ),
   )
 }
+
+///|
+async test "demo_business_checkout_flow" {
+  let out = demo_business_checkout_flow()
+  inspect(
+    out,
+    content=(
+      #|start order 101
+      #|order 101 attempt 0
+      #|order 101 attempt 1
+      #|order 101 success
+      #|start order 102
+      #|order 102 attempt 0
+      #|order 102 attempt 1
+      #|order 102 attempt 2
+      #|order 102 success
+      #|
+    ),
+  )
+}

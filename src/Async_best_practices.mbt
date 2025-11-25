@@ -931,3 +931,60 @@ pub async fn demo_queue_try_get_nonblocking() -> String {
   })
   log.to_string()
 }
+
+///|
+/// 示例 25: 业务综合场景 - 下单与支付流程
+/// 
+/// 演示如何在一个真实感更强的“下单+支付”流程中组合使用
+/// 超时控制与重试策略，同时保持逻辑结构清晰。
+///
+/// 场景设定：
+/// - 有两笔订单：101 和 102；
+/// - 每笔订单调用支付网关；
+/// - 支付网关可能出现瞬态失败，通过指数退避重试；
+/// - 整体调用被一个上限超时保护，避免长时间悬挂。
+///
+/// # 最佳实践
+/// - 将“外部依赖调用”封装为带重试+超时的基础设施函数；
+/// - 业务层只关注“下单是否成功”，日志用于诊断；
+/// - 超时上限应大于“最大重试时间总和”并留有安全边界。
+///
+/// # 示例
+/// ```moonbit no-check
+/// let result = demo_business_checkout_flow()
+/// // 订单 101：1 次失败 + 1 次成功
+/// // 订单 102：2 次失败 + 1 次成功
+/// ```
+pub async fn demo_business_checkout_flow() -> String {
+  let log = StringBuilder::new()
+  let orders = [101, 102]
+
+  for order_id in orders {
+    log.write_string("start order \{order_id}\n")
+    let outcome = @async.with_timeout_opt(500, fn() {
+      let mut attempt = 0
+      @async.retry(
+        ExponentialDelay(initial=50, factor=2, maximum=200),
+        fn() {
+          log.write_string("order \{order_id} attempt \{attempt}\n")
+          attempt = attempt + 1
+          // 模拟瞬态失败：前几次抛出 Failure，最终成功
+          if order_id == 101 && attempt < 2 {
+            raise Failure("transient")
+          }
+          if order_id == 102 && attempt < 3 {
+            raise Failure("transient")
+          }
+        },
+      )
+      "ok"
+    })
+
+    match outcome {
+      Some(_) => log.write_string("order \{order_id} success\n")
+      None => log.write_string("order \{order_id} timeout\n")
+    }
+  }
+
+  log.to_string()
+}

@@ -1,6 +1,6 @@
 # MoonBit Async 最佳实践指南
 
-本文以可运行的示例为主线，总结 `moonbitlang/async` 在业务研发中的高频模式与建议。所有示例均在 `examples/core/core.mbt` 中可运行、可测试。
+本文以可运行的示例为主线，总结 `moonbitlang/async` 在业务研发中的高频模式与建议。所有示例均在 `src/Async_best_practices.mbt` 中可运行、可测试，对应测试位于 `src/Async_best_practices_test.mbt`。
 
 ## 目录
 - 结构化并发与任务组
@@ -12,6 +12,7 @@
 - 任务句柄与等待
 - 持续服务循环与自动重试
 - 组级清理（defer/FILO）
+- 业务综合场景模板（下单+支付）
 
 ---
 
@@ -76,6 +77,16 @@
   - `TaskGroup::add_defer(async () -> Unit)` 提供结构化清理；
   - 与 `defer`、取消传播协作，顺序可预测（FILO）。
 
+## 业务综合场景模板（下单+支付）
+- 示例：`demo_business_checkout_flow`
+- 思路：
+  - 将“支付网关调用”视作外部依赖；
+  - 在基础设施层为其统一加上 `retry(ExponentialDelay)` 与 `with_timeout_opt`；
+  - 业务层只关心“下单是否成功”以及日志中的尝试次数与结果；
+- 建议：
+  - 在真实项目中，可将该示例改造成 `payment_client.mbt` 中的通用函数，并在订单服务中复用；
+  - 对不同订单类型可配置不同的超时与退避策略。
+
 ---
 
 ## 落地建议清单（Checklist）
@@ -89,8 +100,8 @@
 ---
 
 ## 参考
-- 代码：`examples/core/core.mbt`
-- 测试：`examples/core/core_test.mbt`
+- 代码：`src/Async_best_practices.mbt`
+- 测试：`src/Async_best_practices_test.mbt`
 - 上游：`.mooncakes/moonbitlang/async/`
 
 
