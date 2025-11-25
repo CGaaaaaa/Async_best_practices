@@ -15,8 +15,7 @@
 - 测试采用 `inspect(...)` 快照，便于学习与回归
 - 目前推荐在 native 目标下运行（见下文"目标说明"）
 
-更多系统化讲解请阅读：`docs/best_practices.mbt.md`  
-API 覆盖率详情请查看：`COVERAGE_REPORT.md`
+更多系统化讲解请阅读：`docs/best_practices.mbt.md`
 
 ## 环境要求
 
@@ -163,14 +162,6 @@ moon publish
 ```
 
 注意：`name` 前缀需为你的 Mooncakes 用户名；建议仓库名和模块名使用小写连字符风格。
-
-## Git hooks（可选）
-
-启用本仓库随附的 pre-commit 钩子以统一格式与基本检查：
-
-```bash
-git config core.hooksPath .githooks
-```
 
 ## 进一步阅读
 
