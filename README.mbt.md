@@ -2,39 +2,86 @@
 
 本仓库以可运行、可测试的示例方式，系统展示 `moonbitlang/async` 的高效用法与最佳实践。
 
+## 📖 简介
+
+`moonbitlang/async` 是 MoonBit 的异步编程库，提供了结构化并发、任务组管理、超时控制、重试策略、队列和信号量等核心功能。本仓库通过 **25 个精心设计的示例**，帮助程序员和 AI 代码助手快速掌握异步编程的最佳实践。
+
+### 为什么需要这个库？
+
+- **学习曲线陡峭**：异步编程涉及任务组、取消传播、结构化并发等复杂概念
+- **最佳实践分散**：官方文档可能缺少实际业务场景的完整示例
+- **AI 辅助开发**：通过系统化的示例，AI 代码助手能更好地理解和使用 Async 库
+- **快速上手**：每个示例都是可运行的，配合测试可以直观看到执行效果
+
 ## 🎯 项目亮点
 
 - 🎉 **100% API 覆盖率**（28/28 API，完整覆盖！）
 - ✅ **25 个完整示例**（入门 8 个 + 高级 17 个，其中 1 个为业务综合示例）
 - ✅ **100% 测试通过率**（所有示例均有快照测试）
 - ✅ **约 1600 行精心设计的代码**
+- 📚 **系统化文档**：从基础概念到高级模式，循序渐进
+- 🔍 **可运行示例**：每个示例都可以直接运行和测试
 
 ## 📁 项目结构
 
-- 示例集中在 `src/` 主包中
+```
+Async_best_practices/
+├── README.mbt.md              # 项目主文档（本文件）
+├── docs/
+│   └── best_practices.mbt.md  # 详细的最佳实践指南
+├── src/
+│   ├── Async_best_practices.mbt      # 25 个示例实现
+│   └── Async_best_practices_test.mbt # 对应的测试用例
+├── moon.mod.json              # 模块配置
+└── LICENSE                    # Apache-2.0 许可证
+```
+
+### 文档说明
+
+- **README.mbt.md**（本文件）：项目概览、快速开始、示例索引
+- **docs/best_practices.mbt.md**：系统化的最佳实践指南，包含设计理念和详细说明
+- **src/Async_best_practices.mbt**：所有示例的实现代码，每个函数都有详细注释
+- **src/Async_best_practices_test.mbt**：测试用例，使用 `inspect()` 快照测试
+
+### 运行环境
+
+- 推荐使用 **native 目标**（`--target native`）
 - 测试采用 `inspect(...)` 快照，便于学习与回归
-- 目前推荐在 native 目标下运行（见下文"目标说明"）
 
-更多系统化讲解请阅读：`docs/best_practices.mbt.md`
+## 🚀 快速开始
 
-## 环境要求
+### 环境要求
 
-- 已安装 MoonBit 工具链（参考官方文档 `https://docs.moonbitlang.com`）
-- 推荐使用 native 目标；macOS 建议安装 Xcode Command Line Tools 以确保 C 工具链可用
+- **MoonBit 工具链**：已安装 MoonBit（参考官方文档 [https://docs.moonbitlang.com](https://docs.moonbitlang.com)）
+- **Native 目标**：推荐使用 `--target native`
+  - macOS：建议安装 Xcode Command Line Tools 以确保 C 工具链可用
+  - Linux：确保已安装 gcc/clang 等 C 编译器
+  - Windows：需要配置 C 工具链
 
-## 快速开始
+### 安装步骤
 
-1) 在模块 `moon.mod.json` 中加入依赖：
+#### 1. 克隆或下载本仓库
+
+```bash
+git clone https://github.com/CGaaaaaa/Async_best_practices.git
+cd Async_best_practices
+```
+
+#### 2. 配置依赖
+
+在模块 `moon.mod.json` 中确保包含依赖：
 
 ```json
 {
   "deps": {
-    "moonbitlang/async": "^0.10.4"
+    "moonbitlang/async": "0.11.0"
   }
 }
 ```
 
-2) 在包的 `moon.pkg.json` 中引入需要的子包：
+#### 3. 配置包导入
+
+在包的 `moon.pkg.json` 中引入需要的子包：
 
 ```json
 {
@@ -46,99 +93,193 @@
 }
 ```
 
-3) 运行测试（native 目标）：
+#### 4. 运行测试
 
 ```bash
+# 运行所有测试
 moon test --target native
+
+# 运行并更新快照（如果行为变更）
+moon test --target native --update
 ```
 
-如仅想快速查看某个用法，可直接打开 `src/Async_best_practices.mbt` 搜索相应函数名。
+#### 5. 查看示例代码
 
-## 核心示例（文件：`src/Async_best_practices.mbt`）
+直接打开 `src/Async_best_practices.mbt` 搜索相应函数名，每个函数都有详细的文档注释和示例。
 
-本文件包含 25 个完整示例，涵盖从入门到高级的各种异步编程模式，其中新增 1 个“下单+支付”业务综合场景示例，演示如何在真实业务流程中组合使用重试与超时。
+### 在你的项目中使用
+
+如果你想在自己的项目中参考这些示例：
+
+1. **复制示例代码**：从 `src/Async_best_practices.mbt` 中复制需要的函数
+2. **阅读文档注释**：每个函数都有 `///|` 开头的详细注释，说明用法和最佳实践
+3. **运行测试验证**：参考 `src/Async_best_practices_test.mbt` 中的测试用例
+4. **阅读最佳实践指南**：查看 `docs/best_practices.mbt.md` 了解设计理念
+
+## 📚 示例索引
+
+本仓库包含 **25 个完整示例**，涵盖从入门到高级的各种异步编程模式。所有示例都在 `src/Async_best_practices.mbt` 文件中，每个函数都有详细的文档注释。
 
 ### 入门示例（示例 1-8）
 
-- 简单异步函数：`hello_async`
-- 并发任务：`concurrent_tasks`
-- 超时处理：`timeout_example`
-- 顺序流水线：`sequential_pipeline`
-- 竞速模式：`race_example`
-- 重试机制：`retry_example`
-- 错误处理：`error_handling_example`
-- 批量处理：`batch_processing`
+适合刚开始学习 Async 库的开发者，涵盖最常用的基础功能：
+
+| 示例 | 函数名 | 说明 | 核心概念 |
+|------|--------|------|----------|
+| 1 | `hello_async` | 简单的异步函数与超时 | `with_timeout_opt` |
+| 2 | `concurrent_tasks` | 并发执行多个任务 | `with_task_group`, `spawn`, `wait` |
+| 3 | `timeout_example` | 超时处理长时间运行的任务 | 超时控制 |
+| 4 | `sequential_pipeline` | 顺序执行异步操作（数据处理流水线） | 异步流水线 |
+| 5 | `race_example` | 竞速模式 - 返回最快完成的任务 | `spawn_bg`, `return_immediately` |
+| 6 | `retry_example` | 重试机制 - 手动实现指数退避 | 手动重试逻辑 |
+| 7 | `error_handling_example` | 错误隔离 - 允许部分任务失败 | `allow_failure=true` |
+| 8 | `batch_processing` | 批量处理 - 并发处理集合元素 | 批量并发 |
 
 ### 高级示例（示例 9-25）
 
-- 结构化并发：`demo_spawn`
-  - 使用 `@async.with_task_group(fn(root) { ... })` 管理任务作用域
-  - `root.spawn_bg` 的“即发即弃”任务仍受取消传播约束
+适合有一定基础的开发者，涵盖更复杂的异步编程模式和最佳实践：
 
-- 超时与取消：`demo_with_timeout`
-  - 用 `@async.with_timeout(ms, fn { ... })` 给异步阶段设定上限
-  - 失败/超时要记录可行动上下文，便于排障
+#### 结构化并发与任务管理
 
-- 关键区防取消：`demo_protect_from_cancel`
-  - 用于提交/回滚、持久化指标、资源交接等原子阶段
-  - 仅在必要时使用，因其会打破外层超时等抽象
+| 示例 | 函数名 | 说明 | 核心概念 |
+|------|--------|------|----------|
+| 9 | `demo_spawn` | 结构化并发 - 任务组管理 | `with_task_group`, `spawn_bg` |
+| 19 | `demo_task_wait_and_try_wait` | 任务句柄与等待 | `Task::try_wait()`, `Task::wait()` |
+| 21 | `demo_group_defer` | 组级清理 | `add_defer`, FILO 顺序 |
 
-- 并发限流（信号量）：`demo_semaphore`
-  - 优先使用信号量而非自制计数器
-  - 关键区应短小：acquire → work → release
+#### 超时与取消控制
 
-- 重试策略：`demo_retry_fixed`
-  - 使用 `@async.retry(FixedDelay(...), fn { ... })` 实现“固定间隔+上限”的退避
+| 示例 | 函数名 | 说明 | 核心概念 |
+|------|--------|------|----------|
+| 10 | `demo_with_timeout` | 超时与取消传播 | `with_timeout`, 取消传播 |
+| 14 | `demo_with_timeout_opt` | 可选超时 | `with_timeout_opt`, `Option` 处理 |
+| 12 | `demo_protect_from_cancel` | 关键区防取消 | `protect_from_cancel` |
 
-- 可选超时：`demo_with_timeout_opt`
-  - `@async.with_timeout_opt(ms, fn)` 返回 `Some(value)` 或 `None`，便于直接分支
+#### 重试策略
 
-- 队列/管道：`demo_queue_pipeline`
-  - 使用 `@aqueue.Queue` 构建生产者-消费者流水线
-  - 非阻塞写、阻塞读（可被取消），先到先服务
+| 示例 | 函数名 | 说明 | 核心概念 |
+|------|--------|------|----------|
+| 13 | `demo_retry_fixed` | 固定延迟重试 | `retry(FixedDelay(...))` |
+| 16 | `demo_retry_exponential` | 指数退避重试 | `retry(ExponentialDelay(...))` |
+| 22 | `demo_retry_immediate` | 立即重试 | `retry(Immediate)` |
+| 23 | `demo_retry_fatal_error` | 重试致命错误 | `fatal_error` 谓词 |
+| 20 | `demo_spawn_loop_retry_exponential` | 持续服务循环 | `spawn_loop`, `IterResult` |
 
-新增示例：
+#### 并发控制
 
-- 重试（指数退避）：`demo_retry_exponential`
-  - `@async.retry(ExponentialDelay(initial, factor, maximum), fn)`
-  - 可视化 backoff 时间线，避免热循环
+| 示例 | 函数名 | 说明 | 核心概念 |
+|------|--------|------|----------|
+| 11 | `demo_semaphore` | 信号量限流 | `Semaphore`, `acquire`, `release` |
+| 17 | `demo_semaphore_try_acquire` | 信号量非阻塞获取 | `try_acquire()` |
 
-- 信号量非阻塞获取：`demo_semaphore_try_acquire`
-  - 用 `Semaphore.try_acquire()` 走“快速失败/降级”路径
-  - 与阻塞式 `acquire()` 搭配，构建更灵活的限流
+#### 队列与流水线
 
-- 多生产者/多消费者队列：`demo_queue_mpmc`
-  - 2P/2C 的 FIFO 消费，输出对值序列断言而非线程 ID
+| 示例 | 函数名 | 说明 | 核心概念 |
+|------|--------|------|----------|
+| 15 | `demo_queue_pipeline` | 队列流水线 | `Queue`, `put`, `get` |
+| 18 | `demo_queue_mpmc` | 多生产者/多消费者队列 | MPMC 模式 |
+| 24 | `demo_queue_try_get_nonblocking` | 队列非阻塞读取 | `try_get()`, `pause()` |
 
-- 任务句柄与等待：`demo_task_wait_and_try_wait`
-  - `Task::try_wait()` 获取非阻塞结果；`Task::wait()` 阻塞直到完成
+#### 业务综合场景
 
-- 持续服务循环：`demo_spawn_loop_retry_exponential`
-  - `root.spawn_loop(retry=ExponentialDelay(...), fn -> IterResult)`
-  - 在循环体内自动重试 + 以 `IterEnd` 退出
+| 示例 | 函数名 | 说明 | 核心概念 |
+|------|--------|------|----------|
+| 25 | `demo_business_checkout_flow` | 业务综合场景 - 下单与支付流程 | 组合使用超时、重试、错误处理 |
 
-- 组级清理：`demo_group_defer`
-  - `TaskGroup::add_defer(async () -> Unit)` 提供结构化清理
-  - 与 `defer`、取消传播协作，顺序可预测（FILO）
+### 如何查找示例
 
-- 业务综合场景：`demo_business_checkout_flow`
-  - 模拟“下单+支付”流程，组合使用 `with_timeout_opt` 与 `retry(ExponentialDelay)`
-  - 展示如何把基础设施能力封装进业务流程
+1. **按功能查找**：使用上表快速定位需要的功能
+2. **搜索代码**：在 `src/Async_best_practices.mbt` 中搜索函数名
+3. **查看测试**：在 `src/Async_best_practices_test.mbt` 中查看对应的测试用例
+4. **阅读文档**：每个函数都有详细的 `///|` 注释，说明用法和最佳实践
+
+### 示例代码结构
+
+每个示例都遵循以下结构：
+
+```moonbit
+///|
+/// 示例 N: 标题 - 简短描述
+/// 
+/// 详细说明该示例的用途和使用场景。
+/// 
+/// # 最佳实践
+/// - 列出关键的最佳实践要点
+/// - 说明何时使用该模式
+/// 
+/// # 示例
+/// ```moonbit no-check
+/// let result = example_function()
+/// // 说明预期结果
+/// ```
+pub async fn example_function() -> String {
+  // 实现代码
+  "result"
+}
+```
 
 运行这些示例的测试可直观看到事件时间线与预期输出。
 
-## 运行与更新快照
+## 🛠️ 开发指南
 
-- 运行：`moon test --target native`
-- 行为变更后更新快照：`moon test --target native --update`
+### 运行测试
 
-- 开发常用：`moon info && moon fmt` 更新接口与格式化代码
-- 质量检查：`moon check` 静态检查；`moon coverage analyze > uncovered.log` 查看覆盖率薄弱点
+```bash
+# 运行所有测试
+moon test --target native
 
-## 目标说明
+# 运行并更新快照（如果行为变更）
+moon test --target native --update
 
-- 上游 `moonbitlang/async` 内部使用 C FFI，`wasm-gc` 目前不支持
-- 推荐 `--target native`；如需 `--target wasm/js`，请按需替换依赖
+# 运行特定测试（如果支持）
+moon test --target native --filter "test_name"
+```
+
+### 常用命令
+
+```bash
+# 更新接口文件
+moon info
+
+# 格式化代码
+moon fmt
+
+# 静态检查
+moon check
+
+# 查看覆盖率
+moon coverage analyze > uncovered.log
+```
+
+### 目标说明
+
+- **推荐使用 `--target native`**：上游 `moonbitlang/async` 内部使用 C FFI，`wasm-gc` 目前不支持
+- **如需 WASM/JS 目标**：请按需替换依赖或等待上游支持
+
+## 📖 学习路径
+
+### 初学者路径
+
+1. **第一步**：阅读本 README，了解项目结构
+2. **第二步**：运行测试，查看示例输出：`moon test --target native`
+3. **第三步**：从入门示例（1-8）开始，逐个阅读代码和注释
+4. **第四步**：阅读 `docs/best_practices.mbt.md` 了解设计理念
+5. **第五步**：尝试在自己的项目中应用这些模式
+
+### 进阶路径
+
+1. **深入理解**：阅读高级示例（9-25），理解复杂场景
+2. **最佳实践**：阅读 `docs/best_practices.mbt.md` 中的详细说明
+3. **业务应用**：参考 `demo_business_checkout_flow` 学习如何组合使用
+4. **源码学习**：查看上游 `moonbitlang/async` 的源码实现
+
+### AI 代码助手使用
+
+如果你使用 AI 代码助手（如 Cursor、Claude Code、GitHub Copilot 等）：
+
+1. **参考 AGENTS.md**：本仓库包含 `AGENTS.md` 文件，帮助 AI 理解项目结构
+2. **引用示例**：在提示中引用具体的示例函数名，AI 可以快速理解你的需求
+3. **阅读文档注释**：每个函数都有详细的文档注释，AI 可以从中学习最佳实践
 
 ## 发布到 Mooncakes（可选）
 
@@ -163,8 +304,36 @@ moon publish
 
 注意：`name` 前缀需为你的 Mooncakes 用户名；建议仓库名和模块名使用小写连字符风格。
 
-## 进一步阅读
+## 📚 进一步阅读
 
-- 查看 `src/Async_best_practices.mbt` 以学习紧凑的惯用写法
-- 参考上游 `.mooncakes/moonbitlang/async/` 中更高级的 IO/HTTP/进程控制示例与文档
-- 阅读 `docs/best_practices.mbt.md` 了解详细的设计理念与最佳实践
+### 项目内文档
+
+- **`src/Async_best_practices.mbt`**：所有示例的实现代码，学习紧凑的惯用写法
+- **`src/Async_best_practices_test.mbt`**：测试用例，了解如何验证异步代码
+- **`docs/best_practices.mbt.md`**：系统化的最佳实践指南，包含设计理念和详细说明
+- **`AGENTS.md`**：AI 代码助手指南，帮助 AI 理解项目结构和使用方式
+
+### 外部资源
+
+- **MoonBit 官方文档**：[https://docs.moonbitlang.com](https://docs.moonbitlang.com)
+- **Async 库源码**：参考上游 `.mooncakes/moonbitlang/async/` 中更高级的 IO/HTTP/进程控制示例
+- **MoonBit 社区**：参与 MoonBit 社区讨论，获取更多帮助
+
+## 🤝 贡献
+
+欢迎贡献！如果你有：
+
+- 新的示例或最佳实践
+- 文档改进建议
+- Bug 报告或修复
+
+请提交 Issue 或 Pull Request。
+
+## 📄 许可证
+
+本项目采用 Apache-2.0 许可证，详见 [LICENSE](LICENSE) 文件。
+
+## 🙏 致谢
+
+- 感谢 `moonbitlang/async` 库的开发者
+- 参考了 [moonbitlang/system-prompt](https://github.com/moonbitlang/system-prompt) 的文档风格
