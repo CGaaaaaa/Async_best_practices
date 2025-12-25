@@ -4,26 +4,107 @@
 
 ## 📖 简介
 
-`moonbitlang/async` 是 MoonBit 的异步编程库，提供了结构化并发、任务组管理、超时控制、重试策略、队列和信号量等核心功能。
+`moonbitlang/async` 是 MoonBit 的异步编程库，提供了结构化并发、任务组管理、超时控制、重试策略、队列和信号量等核心功能。本仓库通过 **25 个精心设计的示例**，帮助程序员和 AI 代码助手快速掌握异步编程的最佳实践。
 
-本仓库的核心目标是：通过可运行的示例和实战模板，让程序员或 AI 在将本库引入到业务项目后，**能够快速学会并工程化地使用 Async 模式来实现可靠、可观测的业务逻辑**。
+## 如何在项目中高效使用 Async（面向程序员与 AI 的实战指南）
 
-### 本仓库如何帮助你快速落地
+本节聚焦「如何把 Async 用好并落地到业务逻辑」，目标是让程序员或 AI 在引入本库后**能直接上手、复用模板并遵循最佳实践**。下面按原则、模板、测试与审查四个维度给出可复制的操作清单与代码片段。
 
-- 提供 25 个从入门到高级的可运行示例，覆盖常见异步模式（超时、重试、限流、队列、结构化并发等）。
-- 提供可直接复制到项目中的基础设施模板（如：带超时+重试的外部调用封装、信号量限流封装、队列生产消费模板）。
-- 每个示例都配套快照测试，方便验证行为并作为学习参考。
-- 针对 AI 助手，我们保留了清晰的示例索引与注释，便于在提示中直接引用函数名快速获得实现建议。
+核心原则（短平快）
+- 对所有外部依赖（网络/DB/第三方）统一使用超时 + 重试封装（基础设施层）；
+- 使用结构化并发（TaskGroup）管理生命周期，避免野生/泄漏任务；
+- 使用信号量限制并发资源（连接池、并发请求）；
+- 将非关键后台任务标记为 allow_failure 或 spawn_bg，并注册组级清理。
 
-### 为什么把“功能与学习”放在 `README.mbt.md`
+推荐基础设施模板（可拷贝）
 
-`README.mbt.md` 用于承载对开发者（以及 AI）最重要的学习材料：设计思路、模式总结、工程化建议与业务级示例。它应当成为在项目中「引入并使用 Async 实现业务逻辑」的首要参考文档。
+1) 外部调用统一封装（超时 + 指数退避）
 
-### 快速上手理由
+```moonbit no-check
+pub async fn call_with_timeout_and_retry[T](timeout_ms : Int, fn_call : () -> T) -> Result[T, String] {
+  @async.with_timeout_opt(timeout_ms, fn() {
+    @async.retry(ExponentialDelay(initial=100, factor=2, maximum=1000), fn() {
+      // 调用外部客户端（可能 raise/Failure）
+      fn_call()
+    })
+  }) match {
+    Some(v) => Ok(v)
+    None => Err("timeout")
+  }
+}
+```
 
-- **学习曲线陡峭**：异步编程涉及任务组、取消传播、结构化并发等概念，故需要示例驱动的学习路径。  
-- **示例优先**：示例能直接运行并观察事件时间线，比纯理论更易掌握。  
-- **工程化封装优先**：示例中推荐把超时/重试等策略封装为基础设施函数，业务层只关心结果与状态变更。
+说明：把上面函数放到 `infra/clients.mbt`，业务层直接调用并处理 Result。
+
+2) HTTP/请求处理器模板（在 handler 中使用 TaskGroup）
+
+```moonbit no-check
+pub async fn handle_request(req) -> Response {
+  @async.with_task_group(fn(root) {
+    // 并发请求内的子任务都在 group 作用域内
+    let db_task = root.spawn(fn() {
+      call_with_timeout_and_retry(500, fn() { query_db(req.id) })
+    })
+    let external = root.spawn(fn() {
+      call_with_timeout_and_retry(1000, fn() { call_payment(req) })
+    })
+    // 等待关键结果
+    let db_res = db_task.wait()
+    let pay_res = external.wait()
+    // 组合业务逻辑
+    merge_results(db_res, pay_res)
+  })
+}
+```
+
+3) 信号量限流（数据库/外部 API）
+
+```moonbit no-check
+let db_sem = @semaphore.Semaphore::new(10) // 最大并发 10
+root.spawn_bg(fn() {
+  db_sem.acquire()
+  defer db_sem.release()
+  do_db_work()
+})
+```
+
+4) 队列 + 消费者流水线（生产者/消费者）
+
+```moonbit no-check
+let q = @aqueue.Queue::new()
+// producer
+root.spawn_bg(fn() {
+  for item in items { q.put(item) }
+})
+// consumer
+root.spawn_bg(fn() {
+  while let Some(v) = q.get() { process(v) }
+})
+```
+
+关键测试与审查要点
+- 为每个基础设施函数（call_with_timeout_and_retry、client wrapper）写单元/集成测试并使用 snapshot 验证错误/成功路径；
+- 在 PR 检查列表中加入：是否对外部调用设置超时？是否使用 TaskGroup 管理任务？是否使用信号量限制关键资源？
+- 对复杂业务流程（如下单+支付）添加端到端快照，验证重试与超时的时间线。
+
+常见陷阱（快速检查）
+- 忘记给外部调用设置超时；
+- 在全局/顶层 spawn 野生任务，导致进程退出后任务仍运行或泄漏；
+- 在持有信号量期间执行长耗时操作（应把关键区短化）；
+- 把关键提交（commit）放在可被取消的上下文中，必要时用 `protect_from_cancel`。
+
+AI 使用建议
+- 对 AI 提问时，直接引用示例函数名（如 `demo_retry_exponential`、`demo_business_checkout_flow`），并说明想要的场景（例如“下单并发 1000 QPS 的限流策略”），AI 可据此给出可运行修改建议；
+- AI 自动改代码时优先改 infra 层（client wrapper）而非业务层，便于全局回滚与验证。
+
+小结：把“超时+重试”封装成基础设施，把“并发/资源控制”用信号量抽象，把“任务生命周期”交给 TaskGroup。示例代码与测试放在 `src/`，基础设施建议放在 `infra/`（或在项目内相应包）。
+
+### 为什么需要这个库？
+
+- **学习曲线陡峭**：异步编程涉及任务组、取消传播、结构化并发等复杂概念
+- **最佳实践分散**：官方文档可能缺少实际业务场景的完整示例
+- **AI 辅助开发**：通过系统化的示例，AI 代码助手能更好地理解和使用 Async 库
+- **快速上手**：每个示例都是可运行的，配合测试可以直观看到执行效果
 
 ## 🎯 项目亮点
 
