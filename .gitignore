@@ -2,3 +2,5 @@
 target/
 .mooncakes/
 .moonagent/
+docs/target/
+.cursor/
