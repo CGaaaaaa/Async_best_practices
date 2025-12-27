@@ -1,12 +1,31 @@
-## MoonBit Async — 最佳实践示例库（可直接跑、可直接学）
+## MoonBit Async — 最佳实践示例库（详细架构设计）
 
-为了推广 `moonbitlang/async` 的使用，我们提供一个 **“拿来就能学会”** 的示例仓库：
+> 本文档是 `README.md` 的**深度扩展版本**，面向需要理解架构设计、使用场景、以及"为什么这样设计"的开发者。
+
+为了推广 `moonbitlang/async` 的使用，我们提供一个 **"拿来就能学会"** 的示例仓库：
 - **示例驱动**：每个关键模式在 `examples/` 中都有可运行代码 + 测试
-- **工程化模板**：把“超时/重试/错误归一化”等策略收口到 `infra/`
+- **工程化模板**：把"超时/重试/错误归一化"等策略收口到 `infra/`
 - **最佳实践正文**：`docs/best_practices.mbt.md` 给出原则、反模式与 PR 检查清单
-- **系统化教学包**：`src/` 提供覆盖更全的“功能目录式”示例与大量测试（作为主教材）
+- **系统化教学包**：`src/` 提供覆盖更全的"功能目录式"示例与大量测试（作为主教材）
 
-### 快速开始（建议只跑 Native）
+---
+
+## 目录
+
+- [快速开始](#快速开始)
+- [架构设计思想](#架构设计思想)
+- [仓库导航](#仓库导航)
+- [学习路径](#学习路径)
+- [使用场景与模式](#使用场景与模式)
+- [为什么这样设计](#为什么这样设计)
+- [如何集成到你的项目](#如何集成到你的项目)
+- [给 AI 的使用方式](#给-ai-的使用方式)
+
+---
+
+## 快速开始
+
+### 环境要求
 
 `moonbitlang/async` 当前包含部分 `extern "C"` 能力，因此 **wasm-gc backend 会失败**。本仓库建议使用 native：
 
@@ -15,36 +34,457 @@ moon check --target native
 moon test --target native
 ```
 
-### Repo 导航（先看哪里）
+### 5 分钟验证
 
-- `docs/best_practices.mbt.md`: Async 最佳实践（原则/反模式/检查清单）
-- `src/`: 主教学包（“功能目录式”示例 + 测试），适合系统学习与查阅
-- `infra/`: “策略收口层”示例（超时 + 重试 + 错误归一化）
-- `examples/`: 可运行的业务组合示例（从最小闭环到进阶模式）
+```bash
+# 克隆仓库
+git clone https://github.com/CGaaaaaa/Async_best_practices.git
+cd Async_best_practices
 
-### 学习路径（10 分钟 → 1 小时）
+# 运行所有测试（应该全绿，33+ async tests）
+moon test --target native
 
-- **10 分钟**：跑通 `examples/checkout`，看懂“业务层只处理 Result，策略在 infra 统一”
-- **30 分钟**：跑通 `examples/task_group` / `examples/retry_timeout`，再浏览 `src/Async_best_practices.mbt` 的对应章节（更系统）
-- **60 分钟**：按 `docs/best_practices.mbt.md` 的 checklist，把你项目的异步调用收口到 infra
+# 运行最小示例
+cd examples/checkout
+moon test --target native
+```
 
-### Examples 索引（建议按顺序）
+如果测试全部通过，说明你的环境已就绪，可以开始学习。
 
-- `examples/checkout`: 最小业务闭环（业务层调用 `@infra` wrapper + snapshot/inspect 测试）
-- `examples/task_group`: TaskGroup 结构化并发（spawn/wait）与 fail-fast 取消传播
-- `examples/retry_timeout`: “统一超时 + 重试 wrapper”的成功/超时用例
-- `examples/semaphore_limiter`: Semaphore 限流（观测最大并发 <= limit）
-- `examples/pipeline_queue`: aqueue 生产者-消费者流水线（并行消费、汇总结果）
+---
 
-### src/ 教学包是什么？什么时候看它？
+## 架构设计思想
 
-`src/` 是“更全的示例目录”：覆盖 `with_timeout(_opt)`、TaskGroup、retry、Semaphore、Queue、取消传播等更多模式，并且配套了大量 `async test`。
+### 核心问题：异步代码为什么难写？
 
-如果你想把它当作依赖引入到自己的项目里，通常做法是在你的 `moon.pkg.json` 里增加包依赖：
-- `CGaaaaaa/async-best-practices/src`（默认别名通常为 `@src`）
-- `CGaaaaaa/async-best-practices/infra`（默认别名通常为 `@infra`）
+在真实业务中，异步编程常见的痛点：
 
-### 给 AI 的使用方式（学习用）
+1. **策略散落**：超时、重试、限流逻辑散布在各个业务文件中
+   - 难以统一调参（例如"所有第三方调用都改为 3 秒超时"）
+   - 代码审查困难（每个文件都要检查是否有超时）
 
-- 把本仓库当作“参考实现”：优先阅读 `docs/best_practices.mbt.md`
-- 写业务时：优先复用 `infra/` 的封装方式，再按 examples 组织并发结构
+2. **取消失控**：没有结构化并发，任务"野生"创建
+   - 父任务取消时，子任务继续运行浪费资源
+   - 无法追踪任务的生命周期
+
+3. **资源耗尽**：没有并发控制
+   - DB 连接池被打满
+   - 第三方 API 被限流（因为并发过高）
+
+4. **测试困难**：异步代码难以复现
+   - 超时场景需要真实等待？
+   - 重试逻辑需要真实失败几次？
+
+### 本仓库的解决方案
+
+#### 1. 三层架构：业务 / infra / 底层 Async
+
+```
+┌─────────────────────────────────────┐
+│  业务层 (examples/checkout.mbt)      │  ← 只表达"做什么"
+│  checkout_orders([101, 102])        │
+│  └─> @infra.call_payment_with_retry │
+└─────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│  策略收口层 (infra/clients.mbt)      │  ← 统一"怎么做"
+│  call_with_timeout_and_retry(...)   │
+│  └─> @async.with_timeout_opt        │
+│  └─> @async.retry                   │
+└─────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│  底层 Async 库 (moonbitlang/async)   │  ← 提供原语
+│  with_timeout_opt / retry / ...     │
+└─────────────────────────────────────┘
+```
+
+**好处**：
+- 业务代码简洁：只处理 `Result[X, String]`，不关心超时/重试细节
+- 策略可审查：所有超时参数、重试策略都在 `infra/` 中，易于统一调整
+- 测试容易：业务层测试只需 mock `infra`，不需要真实 sleep
+
+#### 2. 结构化并发（Structured Concurrency）
+
+**反模式**：
+```moonbit
+// ❌ 野生 spawn，任务失控
+async fn bad_example() -> Int {
+  let t1 = @async.spawn(fn() { ... })  // 谁来取消它？
+  let t2 = @async.spawn(fn() { ... })  // 父任务退出时它还在跑？
+  t1.wait() + t2.wait()
+}
+```
+
+**推荐模式**：
+```moonbit
+// ✅ 用 TaskGroup 管理生命周期
+async fn good_example() -> Int {
+  @async.with_task_group(fn(group) {
+    let t1 = group.spawn(fn() { ... })
+    let t2 = group.spawn(fn() { ... })
+    // group 退出时，所有子任务自动取消
+    t1.wait() + t2.wait()
+  })
+}
+```
+
+**好处**：
+- 任务有"父亲"（TaskGroup），生命周期可控
+- 取消传播：父任务取消时，子任务也被取消
+- fail-fast：默认 `allow_failure=false`，一个任务失败会取消兄弟任务
+
+#### 3. 有限并发与背压
+
+**问题场景**：
+- 你的服务调用第三方 API，没有限流 → API 提供商返回 429（Too Many Requests）
+- 你的服务并发查询 DB，没有连接池上限 → DB 连接耗尽
+
+**方案**：
+```moonbit
+// 用 Semaphore 限制最大并发
+let sem = @semaphore.Semaphore::new(10)  // 最多 10 个并发
+
+for item in items {
+  sem.acquire()  // 阻塞直到有空闲槽位
+  group.spawn_bg(fn() {
+    process(item)
+    sem.release()
+  })
+}
+```
+
+**好处**：
+- 保护外部依赖（DB、API）不被打爆
+- 保护自身资源（内存、CPU）不耗尽
+
+#### 4. 测试优先（Testability First）
+
+本仓库所有示例都配套 `async test`：
+- **快照测试**：用 `inspect(content=...)` 验证输出
+- **场景覆盖**：成功/超时/瞬态失败/取消传播
+- **可复现**：不依赖真实外部服务（用 mock 或计数器模拟）
+
+---
+
+## 仓库导航
+
+### 1. 入口文档（先看这里）
+
+- **`README.md`**（本仓库 GitHub 首页）：快速上手、示例索引
+- **`README.mbt.md`**（本文件）：架构设计、为什么这样设计
+- **`docs/best_practices.mbt.md`**：核心原则、反模式对比、PR 检查清单
+
+### 2. 策略收口层（复制到你的项目）
+
+- **`infra/README.mbt.md`**：策略收口的设计思想
+- **`infra/clients.mbt`**：通用 `call_with_timeout_and_retry` 实现
+- **`infra/clients_test.mbt`**：超时/重试的测试用例
+
+### 3. 可运行示例（从简单到复杂）
+
+| 示例 | 核心知识点 | 推荐阅读顺序 |
+|------|-----------|-------------|
+| `examples/checkout` | 业务与 infra 分层、快照测试 | 1️⃣ |
+| `examples/task_group` | 结构化并发、fail-fast | 2️⃣ |
+| `examples/retry_timeout` | 超时/重试策略 | 3️⃣ |
+| `examples/semaphore_limiter` | 并发限流 | 4️⃣ |
+| `examples/pipeline_queue` | 生产者-消费者流水线 | 5️⃣ |
+
+每个示例都有独立的 `README.mbt.md`，解释设计意图、关键代码、测试策略。
+
+### 4. 系统化教学包（API 手册）
+
+- **`src/README.mbt.md`**：完整 API 索引
+- **`src/Async_best_practices.mbt`**：17 个示例函数，覆盖所有 Async 原语
+- **`src/Async_best_practices_test.mbt`**：33+ 测试用例
+
+---
+
+## 学习路径
+
+### 路径 A：快速上手业务写法（1 小时）
+
+适合：需要立即在项目中使用 Async 的开发者
+
+1. **10 分钟**：跑通 `examples/checkout`，理解业务与 infra 分层
+2. **20 分钟**：跑通 `examples/task_group` 和 `examples/retry_timeout`
+3. **30 分钟**：阅读 `docs/best_practices.mbt.md` 的"PR 检查清单"
+
+完成后，你应该能：
+- 在业务代码中正确调用 `@infra` 封装
+- 使用 `TaskGroup` 管理并发任务
+- 用 `inspect` 写快照测试
+
+### 路径 B：系统学习 Async API（2 小时）
+
+适合：需要深入理解 Async 库的开发者
+
+1. **30 分钟**：阅读 `src/Async_best_practices.mbt` 的前 5 个示例
+2. **30 分钟**：运行 `moon test --target native src/`，对照输出理解行为
+3. **60 分钟**：按主题查阅：
+   - 超时：`demo_with_timeout` / `demo_with_timeout_opt`
+   - 重试：`demo_retry_fixed_delay` / `demo_retry_exponential`
+   - 限流：`demo_semaphore` / `demo_try_acquire`
+   - 队列：`demo_queue_pipeline`
+
+完成后，你应该能：
+- 理解 `with_timeout` vs `with_timeout_opt` 的区别
+- 选择合适的重试策略（固定延迟 vs 指数退避）
+- 正确使用 `Semaphore` 限流
+
+### 路径 C：代码审查与架构设计（1 小时）
+
+适合：需要审查他人代码或设计架构的 Tech Lead
+
+1. **20 分钟**：阅读 `docs/best_practices.mbt.md` 的所有原则
+2. **20 分钟**：对照 `examples/` 的正例，理解"好代码"的标准
+3. **20 分钟**：用 PR 检查清单审查你的项目代码
+
+完成后,你应该能：
+- 识别常见反模式（野生 spawn、缺少超时、滥用重试）
+- 提出改进方案（例如"这里应该加限流"）
+- 评估代码的可测试性
+
+---
+
+## 使用场景与模式
+
+### 场景 1：调用第三方 API
+
+**需求**：调用支付网关，需要超时保护 + 瞬态失败重试
+
+**方案**：
+```moonbit
+// infra/clients.mbt
+pub async fn call_payment_api(order_id : Int) -> Result[String, String] {
+  call_with_timeout_and_retry(3000, fn() {  // 3 秒超时
+    // 真实的 HTTP 调用
+    http_post("/api/pay", order_id)
+  })
+}
+
+// 业务层
+let result = @infra.call_payment_api(101)
+match result {
+  Ok(txn_id) => log("success: {txn_id}")
+  Err(e) => log("failed: {e}")
+}
+```
+
+**好处**：
+- 超时参数集中在 `infra`，业务层无需关心
+- 重试策略可统一调整（例如改为指数退避）
+
+### 场景 2：并行查询多个数据源
+
+**需求**：同时查询用户信息、订单历史、推荐列表，任一失败则整体失败
+
+**方案**：
+```moonbit
+@async.with_task_group(fn(group) {
+  let t1 = group.spawn(fn() { @infra.fetch_user(uid) })
+  let t2 = group.spawn(fn() { @infra.fetch_orders(uid) })
+  let t3 = group.spawn(fn() { @infra.fetch_recommendations(uid) })
+  
+  // 任一失败会自动取消其他任务（fail-fast）
+  (t1.wait(), t2.wait(), t3.wait())
+})
+```
+
+**好处**：
+- 三个查询并行执行（性能）
+- 一个失败时立即取消其他（节省资源）
+
+### 场景 3：批量处理任务（有并发上限）
+
+**需求**：处理 1000 个订单，但 DB 连接池只有 20 个
+
+**方案**：
+```moonbit
+let sem = @semaphore.Semaphore::new(20)
+@async.with_task_group(fn(group) {
+  for order in orders {
+    group.spawn_bg(fn() raise {
+      sem.acquire()
+      process_order(order)  // 真实 DB 操作
+      sem.release()
+    })
+  }
+})
+```
+
+**好处**：
+- 最多 20 个并发，不会打爆 DB
+- 用 `spawn_bg` 避免阻塞（后台任务）
+
+### 场景 4：生产者-消费者流水线
+
+**需求**：爬虫抓取 URL，多个 worker 并行解析内容
+
+**方案**：
+```moonbit
+@async.with_task_group(fn(group) {
+  let queue = @aqueue.Queue::new()
+  
+  // Producer
+  group.spawn_bg(fn() {
+    for url in urls {
+      queue.put(url)
+    }
+    queue.put("STOP")  // 终止信号
+  })
+  
+  // Consumers
+  for _ in 0..<workers {
+    group.spawn_bg(fn() {
+      for {
+        let url = queue.get()
+        guard url != "STOP" else { break }
+        parse_and_save(url)
+      }
+    })
+  }
+})
+```
+
+**好处**：
+- 解耦生产与消费
+- 多 worker 并行处理
+
+---
+
+## 为什么这样设计
+
+### Q1：为什么要有 `infra/` 层？
+
+**A**：
+- **统一治理**：所有外部调用的超时/重试策略都在一处，方便调整
+- **代码审查**：审查时只需检查 `infra/`，无需逐个检查业务文件
+- **测试简化**：业务层测试时 mock `infra`，不需要真实 sleep
+
+### Q2：为什么强调 `TaskGroup`？
+
+**A**：
+- **资源管理**：防止任务泄漏（父任务退出时子任务还在跑）
+- **取消传播**：父任务取消时，子任务也被取消
+- **fail-fast**：关键任务失败时，立即取消兄弟任务（避免浪费资源）
+
+### Q3：为什么示例都用 `inspect` 做测试？
+
+**A**：
+- **快照测试**：验证完整输出（不只是某个字段）
+- **可读性**：测试代码即文档，一眼看懂预期行为
+- **稳定性**：不依赖真实外部服务，测试100%可复现
+
+### Q4：为什么 `src/` 和 `examples/` 都有示例？
+
+**A**：
+- `src/`：**API 手册**，系统化覆盖所有原语（适合"查找某个 API 怎么用"）
+- `examples/`：**业务场景**，展示如何组合多个原语（适合"学习如何写真实代码"）
+
+### Q5：为什么不支持 `wasm-gc`？
+
+**A**：`moonbitlang/async` 当前用了 `extern "C"` 调用 native 能力（例如 sleep）。未来可能会提供纯 WebAssembly 实现。
+
+---
+
+## 如何集成到你的项目
+
+### 方式 1：复制 `infra/` 模板
+
+```bash
+# 复制到你的项目
+cp -r infra/ your-project/infra/
+
+# 修改 your-project/infra/clients.mbt
+# 把 mock 实现替换为真实 HTTP/DB 调用
+
+# 在业务代码中引入
+{
+  "import": ["your-username/your-project/infra"]
+}
+```
+
+### 方式 2：作为依赖引入（如果发布到 Mooncakes）
+
+```json
+{
+  "import": [
+    "CGaaaaaa/async-best-practices/infra",
+    "CGaaaaaa/async-best-practices/src"
+  ]
+}
+```
+
+### 集成步骤
+
+1. **识别外部调用**：找出代码中所有 HTTP/DB/RPC 调用
+2. **封装到 infra**：把每种调用封装为 `call_xxx_with_retry`
+3. **业务层改造**：业务代码只调用 `@infra.call_xxx`
+4. **补充测试**：用 `inspect` 验证业务逻辑
+
+---
+
+## 给 AI 的使用方式
+
+### 学习阶段
+
+1. **优先阅读** `docs/best_practices.mbt.md`（了解原则）
+2. **按顺序运行** `examples/`（从简单到复杂）
+3. **查阅 API** `src/Async_best_practices.mbt`（查找具体用法）
+
+### 写业务代码时
+
+1. **复用 infra 模式**：优先用 `@infra.call_with_timeout_and_retry`
+2. **用 TaskGroup**：所有并发都用 `with_task_group` 包起来
+3. **加限流**：外部调用必须用 `Semaphore` 限流
+4. **写测试**：用 `inspect` 做快照测试
+
+### 代码审查时
+
+对照 `docs/best_practices.mbt.md` 的 PR 检查清单：
+- ✅ 外部调用有超时？
+- ✅ 重试策略合理？
+- ✅ 用了 TaskGroup？
+- ✅ 有并发上限？
+- ✅ 测试覆盖了超时/取消场景？
+
+---
+
+## 常见问题
+
+### Q：为什么测试需要 `--target native`？
+
+A：`moonbitlang/async` 用了 `extern "C"`，`wasm-gc` 暂不支持。未来可能改进。
+
+### Q：`with_timeout` 和 `with_timeout_opt` 有什么区别？
+
+A：
+- `with_timeout`：超时时 `raise Failure`（会取消父任务）
+- `with_timeout_opt`：超时时返回 `None`（不影响父任务）
+
+推荐：业务层用 `with_timeout_opt`，在 infra 层转为 `Result`。
+
+### Q：什么时候用 `spawn_bg`？
+
+A：后台可选任务（例如打点、预热），允许失败且不影响主流程。
+
+### Q：如何调试异步代码？
+
+A：
+1. 用 `log.write_string` 打印时序
+2. 用 `inspect` 验证输出
+3. 减少并发（改为串行）排查问题
+
+---
+
+## 延伸阅读
+
+- [MoonBit Async 官方文档](https://docs.moonbitlang.com/async)
+- [Structured Concurrency 论文](https://en.wikipedia.org/wiki/Structured_concurrency)
+- [moonbitlang/async 源码](https://github.com/moonbitlang/async)
+
+---
+
+**Happy Async Programming! 🚀**
