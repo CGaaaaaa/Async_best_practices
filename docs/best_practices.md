@@ -36,19 +36,21 @@
 
 ## 1. 推荐的学习路径
 
-### 快速上手
+### 核心概念
 
-1. **系统扫一遍主教材**：`src/Async_best_practices.mbt`（功能目录式示例 + 大量测试）
-2. **跑通最小闭环**：查看 [`examples/README.md`](../examples/README.md) 中的 checkout 示例（约 10 分钟）
-3. **学习结构化并发**：查看 [`examples/README.md`](../examples/README.md) 中的 task_group 示例（约 20 分钟）
-4. **学习策略收口**：查看 [`examples/README.md`](../examples/README.md) 中的 retry_timeout 示例（约 20 分钟）
+1. **业务与 infra 分层**：查看 [`examples/README.md`](../examples/README.md) 中的 checkout 示例
+2. **结构化并发**：查看 [`examples/README.md`](../examples/README.md) 中的 task_group 示例
+3. **超时与重试**：查看 [`examples/README.md`](../examples/README.md) 中的 retry_timeout 示例
 
-### 深入学习
+### 并发控制
 
-1. **学习限流**：查看 [`examples/README.md`](../examples/README.md) 中的 semaphore_limiter 示例（约 30 分钟）
-2. **学习流水线**：查看 [`examples/README.md`](../examples/README.md) 中的 pipeline_queue 示例（约 30 分钟）
-3. **对照 API 手册**：`src/Async_best_practices.mbt` 的完整示例（约 60 分钟）
-4. **阅读本文档**：逐条理解原则，对照项目代码检查（约 60 分钟）
+1. **限流**：查看 [`examples/README.md`](../examples/README.md) 中的 semaphore_limiter 示例
+2. **队列与流水线**：查看 [`examples/README.md`](../examples/README.md) 中的 pipeline_queue 示例
+
+### API 参考与最佳实践
+
+1. **API 示例**：运行 `moon test --target native src/` 查看所有 API 示例
+2. **完整原则**：阅读本文档，逐条理解并对照项目代码检查
 
 ### 主题对照索引（需要查找某个 API 时使用）
 

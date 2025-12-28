@@ -108,24 +108,24 @@ Async_best_practices/
 
 ## 🎯 学习路径
 
-### 快速上手（约 30 分钟）
+### 核心概念
 
-1. **阅读**：[`docs/best_practices.md`](docs/best_practices.md) 的"总原则"章节
-2. **运行**：查看 [`examples/README.md`](examples/README.md) 中的 checkout 示例（最小闭环）
-3. **理解**：业务层与 infra 层的职责分离
-4. **查阅**：[`docs/quick-reference.md`](docs/quick-reference.md)（API 速查表）
+1. **业务与 infra 分层**：查看 [`examples/README.md`](examples/README.md) 中的 checkout 示例
+2. **结构化并发**：查看 [`examples/README.md`](examples/README.md) 中的 task_group 示例
+3. **超时与重试**：查看 [`examples/README.md`](examples/README.md) 中的 retry_timeout 示例
 
-### 深入学习（约 1 小时）
+### 并发控制
 
-1. **运行**：查看 [`examples/README.md`](examples/README.md) 中的 task_group 和 retry_timeout 示例
-2. **对比**：`src/Async_best_practices.mbt` 中的对应章节
-3. **遇到问题？查阅**：[`docs/faq.md`](docs/faq.md)
+1. **限流**：查看 [`examples/README.md`](examples/README.md) 中的 semaphore_limiter 示例
+2. **队列与流水线**：查看 [`examples/README.md`](examples/README.md) 中的 pipeline_queue 示例
 
-### 综合应用（约 2 小时）
+### 综合应用
 
-1. **运行**：查看 [`examples/README.md`](examples/README.md) 中的 semaphore_limiter、pipeline_queue 和 api-gateway 示例
-2. **实践**：把你项目的异步调用改造为 infra 封装
-3. **检查**：用 `docs/best_practices.md` 的 PR 检查清单审查代码
+1. **生产级案例**：查看 [`examples/README.md`](examples/README.md) 中的 api-gateway 示例
+2. **API 参考**：运行 `moon test --target native src/` 查看所有 API 示例
+3. **最佳实践**：阅读 [`docs/best_practices.md`](docs/best_practices.md) 了解完整原则
+4. **快速查阅**：需要查找 API 时使用 [`docs/quick-reference.md`](docs/quick-reference.md)
+5. **常见问题**：遇到问题时查阅 [`docs/faq.md`](docs/faq.md)
 
 ## 💡 核心设计思想
 
