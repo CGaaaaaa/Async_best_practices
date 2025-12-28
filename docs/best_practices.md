@@ -36,19 +36,19 @@
 
 ## 1. 推荐的学习路径
 
-### 路径 A：快速上手（适合赶项目）
+### 快速上手
 
-1. **先系统扫一遍主教材**：`src/Async_best_practices.mbt`（功能目录式示例 + 大量测试）
-2. **先跑通最小闭环**：`examples/checkout`（10 分钟）
-3. **再看结构化并发**：`examples/task_group`（20 分钟）
-4. **学习"策略收口"**：`examples/retry_timeout`（20 分钟）
+1. **系统扫一遍主教材**：`src/Async_best_practices.mbt`（功能目录式示例 + 大量测试）
+2. **跑通最小闭环**：查看 [`examples/README.md`](../examples/README.md) 中的 checkout 示例（约 10 分钟）
+3. **学习结构化并发**：查看 [`examples/README.md`](../examples/README.md) 中的 task_group 示例（约 20 分钟）
+4. **学习策略收口**：查看 [`examples/README.md`](../examples/README.md) 中的 retry_timeout 示例（约 20 分钟）
 
-### 路径 B：深度学习（适合架构设计）
+### 深入学习
 
-1. **学习限流**：`examples/semaphore_limiter`（30 分钟）
-2. **学习流水线**：`examples/pipeline_queue`（30 分钟）
-3. **对照 API 手册**：`src/Async_best_practices.mbt` 的完整示例（60 分钟）
-4. **阅读本文档**：逐条理解原则，对照项目代码检查（60 分钟）
+1. **学习限流**：查看 [`examples/README.md`](../examples/README.md) 中的 semaphore_limiter 示例（约 30 分钟）
+2. **学习流水线**：查看 [`examples/README.md`](../examples/README.md) 中的 pipeline_queue 示例（约 30 分钟）
+3. **对照 API 手册**：`src/Async_best_practices.mbt` 的完整示例（约 60 分钟）
+4. **阅读本文档**：逐条理解原则，对照项目代码检查（约 60 分钟）
 
 ### 主题对照索引（需要查找某个 API 时使用）
 
