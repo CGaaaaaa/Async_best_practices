@@ -12,7 +12,7 @@ description: Learn MoonBit Async by running examples. Best practices for moonbit
 
 ## 📖 项目简介
 
-这是一个**生产级的 MoonBit Async 最佳实践示例库**，旨在帮助开发者和 AI 快速掌握 `moonbitlang/async` 的高效用法。
+这是一个**生产级的 MoonBit Async 最佳实践示例库**，旨在帮助开发者快速掌握 `moonbitlang/async` 的高效用法。
 
 ### 为什么需要这个仓库？
 
@@ -194,26 +194,6 @@ moon test --target native
 - ✅ **瞬态失败**：重试后成功
 - ✅ **取消传播**：父任务取消时子任务也取消
 - ✅ **并发限制**：最大并发数不超过限制
-
-## 🤖 给 AI Agent 的使用说明
-
-如果你是 AI Agent，建议：
-
-1. **学习阶段**：
-   - 优先阅读 `docs/best_practices.mbt.md`
-   - 按顺序运行 `examples/` 的 6 个示例
-   - 查阅 `src/Async_best_practices.mbt` 作为 API 手册
-
-2. **写业务代码时**：
-   - 复用 `src/Async_best_practices.mbt` 中的封装模式
-   - 使用 `TaskGroup` 管理并发任务
-   - 参考 `examples/` 的组合方式
-
-3. **代码审查时**：
-   - 对照 `docs/best_practices.mbt.md` 的 PR 检查清单
-   - 确保外部调用都有超时+重试
-   - 确保并发任务都在 TaskGroup 内
-   - 快速查阅：[`docs/quick-reference.md`](docs/quick-reference.md)
 
 ## 🔧 如何在你的项目中使用
 

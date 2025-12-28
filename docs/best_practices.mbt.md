@@ -7,7 +7,7 @@ description: Best practices for MoonBit Async library. Learn structured concurre
 
 > 本文档提供**可执行的原则**：每条规则都配有正例/反例代码对比，以及实际场景说明。
 
-本仓库的目标是：让程序员或 AI **通过阅读 + 运行代码**，快速掌握 `moonbitlang/async` 的高效用法，并能把这些模式迁移到真实业务。
+本仓库的目标是：让程序员**通过阅读 + 运行代码**，快速掌握 `moonbitlang/async` 的高效用法，并能把这些模式迁移到真实业务。
 
 ---
 
