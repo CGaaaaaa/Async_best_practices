@@ -551,7 +551,7 @@ pub async fn timeout_example() -> String
 
 ---
 
-### 高级并发模式
+### 并发模式
 
 #### 4. `sequential_pipeline` — 顺序流水线
 
