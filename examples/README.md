@@ -314,11 +314,11 @@ pub async fn pipeline_sum(n_items : Int, workers : Int) -> Int {
 
 ## 6. api-gateway — 综合真实案例
 
-> **推荐阅读顺序：完成其他示例后**（综合应用）
+> **推荐阅读顺序：完成其他示例后**
 
 ### 核心知识点
 
-- ✅ **综合应用**：TaskGroup + Semaphore + 超时 + 重试 + infra 层
+- ✅ **TaskGroup + Semaphore + 超时 + 重试 + infra 层**：综合运用所有 Async 模式
 - ✅ **真实场景**：API 网关的路由、限流、熔断、健康检查
 - ✅ **并发处理**：批量请求并行处理
 - ✅ **后台任务**：日志记录不阻塞主流程
