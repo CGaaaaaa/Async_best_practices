@@ -46,11 +46,13 @@ moon test --target native
 # 查看最小业务示例
 cd examples/checkout
 moon test --target native
+# 或查看所有示例说明
+cat examples/README.md
 ```
 
 ### 10 分钟理解核心思想
 
-阅读 [`examples/checkout`](examples/checkout/README.md) 示例，理解：
+阅读 [`examples/README.md`](examples/README.md) 中的 checkout 示例，理解：
 1. **业务层**只处理 `Result`，不关心"怎么调用"
 2. **infra 层**统一封装超时/重试策略
 3. 用 `inspect` 做快照测试，验证业务逻辑
@@ -109,7 +111,7 @@ Async_best_practices/
 ### 初级（30 分钟）
 
 1. **阅读**：[`docs/best_practices.md`](docs/best_practices.md) 的"总原则"章节
-2. **运行**：`examples/checkout`（最小闭环示例）
+2. **运行**：查看 [`examples/README.md`](examples/README.md) 中的 checkout 示例（最小闭环）
 3. **理解**：业务层与 infra 层的职责分离
 4. 🆕 **查阅**：[`docs/quick-reference.md`](docs/quick-reference.md)（API 速查表）
 
@@ -122,8 +124,8 @@ Async_best_practices/
 
 ### 高级（2 小时）
 
-1. **运行**：`examples/semaphore_limiter`（限流）+ `examples/pipeline_queue`（队列）
-2. 🆕 **综合案例**：`examples/api-gateway`（生产级 API 网关）
+1. **运行**：查看 [`examples/README.md`](examples/README.md) 中的 semaphore_limiter 和 pipeline_queue 示例
+2. **综合案例**：查看 [`examples/README.md`](examples/README.md) 中的 api-gateway 示例（生产级 API 网关）
 3. **实践**：把你项目的异步调用改造为 infra 封装
 4. **检查**：用 `docs/best_practices.md` 的 PR 检查清单审查代码
 
@@ -182,12 +184,12 @@ sem.release()
 
 | 示例 | 核心知识点 | 测试覆盖 | 推荐阅读顺序 |
 |------|-----------|---------|-------------|
-| [`examples/checkout`](examples/checkout/) | 业务与 infra 分层 | 快照测试 | 1️⃣ |
-| [`examples/task_group`](examples/task_group/) | 结构化并发、fail-fast | 取消传播 | 2️⃣ |
-| [`examples/retry_timeout`](examples/retry_timeout/) | 超时/重试策略 | 成功/超时/瞬态失败 | 3️⃣ |
-| [`examples/semaphore_limiter`](examples/semaphore_limiter/) | 并发限流 | 最大并发观测 | 4️⃣ |
-| [`examples/pipeline_queue`](examples/pipeline_queue/) | 生产者-消费者 | 并行消费+汇总 | 5️⃣ |
-| 🆕 [`examples/api-gateway`](examples/api-gateway/) | **生产级API网关** | 路由/限流/重试/健康检查 | 6️⃣ 综合 |
+| [checkout](examples/README.md#1-checkout---最小业务闭环) | 业务与 infra 分层 | 快照测试 | 1️⃣ |
+| [task_group](examples/README.md#2-task_group---结构化并发) | 结构化并发、fail-fast | 取消传播 | 2️⃣ |
+| [retry_timeout](examples/README.md#3-retry_timeout---超时与重试) | 超时/重试策略 | 成功/超时/瞬态失败 | 3️⃣ |
+| [semaphore_limiter](examples/README.md#4-semaphore_limiter---并发限流) | 并发限流 | 最大并发观测 | 4️⃣ |
+| [pipeline_queue](examples/README.md#5-pipeline_queue---生产者-消费者) | 生产者-消费者 | 并行消费+汇总 | 5️⃣ |
+| [api-gateway](examples/README.md#6-api-gateway---综合真实案例) | **生产级API网关** | 路由/限流/重试/健康检查 | 6️⃣ 综合 |
 
 ## 🧪 测试策略
 
@@ -201,6 +203,8 @@ moon test --target native
 moon test --target native infra/
 moon test --target native examples/checkout/
 moon test --target native examples/api-gateway/
+# 查看所有示例说明
+cat examples/README.md
 ```
 
 **最新测试结果**：✅ Total tests: 42, passed: 42, failed: 0

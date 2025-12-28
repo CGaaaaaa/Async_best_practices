@@ -500,9 +500,291 @@ println("Max concurrency: \{max_count.val}")
 
 ---
 
+## 完整 API 索引
+
+> 以下 API 索引来自 `src/Async_best_practices.mbt`，包含 17 个系统化示例函数，每个都有可运行的测试代码。
+
+### 基础异步操作
+
+#### 1. `hello_async` — 基本超时
+
+```moonbit
+pub async fn hello_async() -> String
+```
+
+**功能**：演示基本的超时功能
+
+**关键 API**：`@async.with_timeout_opt(timeout_ms, fn() { ... })`
+
+**学习重点**：理解 `with_timeout_opt` 的基本用法，超时时返回 `None`
+
+---
+
+#### 2. `concurrent_tasks` — 并发执行多个任务
+
+```moonbit
+pub async fn concurrent_tasks() -> Array[Int]
+```
+
+**功能**：演示 `TaskGroup` 的用法，并发执行多个任务
+
+**关键 API**：
+- `@async.with_task_group(fn(group) { ... })`
+- `group.spawn(fn() { ... })`
+- `task.wait()`
+
+**学习重点**：用 `TaskGroup` 管理并发任务，所有任务都在 group 内，生命周期可控
+
+---
+
+#### 3. `timeout_example` — 超时处理
+
+```moonbit
+pub async fn timeout_example() -> String
+```
+
+**功能**：演示超时场景（任务耗时超过超时时间）
+
+**关键 API**：`@async.with_timeout_opt(timeout_ms, fn() { ... })` + `@async.sleep(ms)`
+
+**学习重点**：超时时返回 `None`，业务层可以根据 `None` 做降级处理
+
+---
+
+### 高级并发模式
+
+#### 4. `sequential_pipeline` — 顺序流水线
+
+```moonbit
+pub async fn sequential_pipeline() -> Int
+```
+
+**功能**：顺序执行异步操作，构建数据处理流水线
+
+**学习重点**：链式调用多个 `async fn`
+
+---
+
+#### 5. `race_example` — 竞争条件
+
+```moonbit
+pub async fn race_example() -> String
+```
+
+**功能**：演示多个任务竞争，第一个完成者胜出
+
+**关键 API**：`@async.race([task1, task2, task3])`
+
+**学习重点**：用 `race` 实现"最快响应"场景
+
+---
+
+#### 6. `retry_example` — 重试机制
+
+```moonbit
+pub async fn retry_example() -> Result[String, String]
+```
+
+**功能**：演示瞬态失败的重试机制
+
+**关键 API**：`@async.retry(ExponentialDelay(...), fn() { ... })`
+
+**学习重点**：区分瞬态错误（可重试）与逻辑错误（不可重试）
+
+---
+
+#### 7. `error_handling_example` — 错误处理
+
+```moonbit
+pub async fn error_handling_example() -> String
+```
+
+**功能**：异步任务中的错误处理与取消传播
+
+**学习重点**：TaskGroup 的 fail-fast 行为
+
+---
+
+#### 8. `batch_processing` — 批量处理
+
+```moonbit
+pub async fn batch_processing() -> Array[Int]
+```
+
+**功能**：批量处理任务，结合并发与限流
+
+**学习重点**：用 Semaphore 控制批量处理的并发数
+
+---
+
+### TaskGroup 详解
+
+#### 9. `demo_spawn` — spawn vs spawn_bg
+
+```moonbit
+pub async fn demo_spawn() -> String
+```
+
+**功能**：演示 `TaskGroup.spawn` 和 `spawn_bg` 的区别
+
+**关键 API**：
+- `group.spawn(fn() { ... })`：关键任务，失败会取消兄弟任务
+- `group.spawn_bg(fn() { ... })`：后台任务，允许失败
+
+**学习重点**：何时用 `spawn`（关键任务），何时用 `spawn_bg`（后台任务）
+
+---
+
+#### 10. `demo_with_timeout` — 超时机制
+
+```moonbit
+pub async fn demo_with_timeout() -> String
+```
+
+**功能**：演示 `with_timeout` 的超时机制和取消传播
+
+**关键 API**：`@async.with_timeout(ms, fn() { ... })`
+
+**学习重点**：`with_timeout` 会抛出 `Failure`，会取消父任务
+
+---
+
+#### 11. `demo_with_timeout_opt` — 超时返回 Option
+
+```moonbit
+pub async fn demo_with_timeout_opt() -> String
+```
+
+**功能**：`with_timeout_opt` 返回 `Option` 类型
+
+**关键 API**：`@async.with_timeout_opt(ms, fn() { ... })`
+
+**学习重点**：推荐使用 `with_timeout_opt`，超时返回 `None`，不取消父任务
+
+---
+
+### 并发控制
+
+#### 12. `demo_semaphore` — 信号量限流
+
+```moonbit
+pub async fn demo_semaphore() -> String
+```
+
+**功能**：信号量限流
+
+**关键 API**：
+- `@semaphore.Semaphore::new(n)`：创建信号量
+- `semaphore.acquire()`：阻塞获取
+- `semaphore.release()`：释放槽位
+
+**学习重点**：用 Semaphore 限制最大并发数
+
+---
+
+#### 13. `demo_semaphore_try_acquire` — 非阻塞获取
+
+```moonbit
+pub async fn demo_semaphore_try_acquire() -> String
+```
+
+**功能**：信号量非阻塞获取
+
+**关键 API**：`semaphore.try_acquire()`：立即返回 `Option`
+
+**学习重点**：何时用 `acquire()`（必须执行），何时用 `try_acquire()`（可降级）
+
+---
+
+### 重试策略
+
+#### 14. `demo_retry_fixed_delay` — 固定延迟重试
+
+```moonbit
+pub async fn demo_retry_fixed_delay() -> String
+```
+
+**功能**：固定延迟重试
+
+**关键 API**：`@async.retry(FixedDelay(delay=100, max_retry=3), fn() { ... })`
+
+**学习重点**：适用于快速瞬态失败
+
+---
+
+#### 15. `demo_retry_exponential` — 指数退避重试
+
+```moonbit
+pub async fn demo_retry_exponential() -> String
+```
+
+**功能**：指数退避重试
+
+**关键 API**：`@async.retry(ExponentialDelay(initial=100, factor=2, maximum=2000), fn() { ... })`
+
+**学习重点**：适用于服务过载、rate limit 等场景
+
+---
+
+### 队列与流水线
+
+#### 16. `demo_queue_pipeline` — 队列流水线
+
+```moonbit
+pub async fn demo_queue_pipeline() -> String
+```
+
+**功能**：队列流水线（生产者-消费者）
+
+**关键 API**：
+- `@aqueue.Queue::new()`：创建队列
+- `queue.put(item)`：放入数据
+- `queue.get()`：取出数据
+
+**学习重点**：用队列解耦生产与消费，注意背压控制
+
+---
+
+### 关键区保护
+
+#### 17. `demo_protect_from_cancel` — 关键区防取消
+
+```moonbit
+pub async fn demo_protect_from_cancel() -> String
+```
+
+**功能**：关键区防取消
+
+**关键 API**：`@async.protect_from_cancel(fn() { ... })`
+
+**学习重点**：只保护关键区（如 DB 提交），不要滥用
+
+---
+
+## 如何查找 API
+
+### 按功能查找
+
+| 需求 | 推荐 API | 所在函数 |
+|------|---------|---------|
+| 超时 | `with_timeout_opt` | `hello_async`, `demo_with_timeout_opt` |
+| 重试 | `retry` | `retry_example`, `demo_retry_exponential` |
+| 并发 | `TaskGroup` | `concurrent_tasks`, `demo_spawn` |
+| 限流 | `Semaphore` | `demo_semaphore`, `batch_processing` |
+| 队列 | `Queue` | `demo_queue_pipeline` |
+
+### 运行测试
+
+所有 API 示例都有对应的测试，运行：
+
+```bash
+moon test --target native src/
+```
+
+---
+
 ## 相关文档
 
-- [完整 API 索引](../src/README.md)
 - [最佳实践详解](./best_practices.md)
 - [常见问题 FAQ](./faq.md)
 - [示例代码](../examples/)

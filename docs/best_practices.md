@@ -219,6 +219,122 @@ async fn good_parallel_fetch() -> (User, Order) {
 
 ## 4. 超时与重试：务必统一封装
 
+**为什么需要 infra 层？**
+
+在真实业务中，异步调用的常见问题：
+
+| 问题 | 症状 | 后果 |
+|------|------|------|
+| **策略散落** | 每个业务文件都写自己的超时/重试逻辑 | 难以统一调参、代码审查困难 |
+| **参数不一致** | A 文件超时 500ms，B 文件超时 300ms | 无法统一治理（例如"所有第三方调用改为 3 秒"） |
+| **测试困难** | 业务代码耦合了 `@async.with_timeout_opt` | 测试时需要真实 sleep，难以 mock |
+
+**infra 层的职责**：
+
+```
+┌─────────────────────────────────────────┐
+│  业务层 (examples/checkout.mbt)          │
+│                                         │
+│  @infra.call_payment_with_retry(101)   │  ← 只调用 wrapper
+│  match result {                         │
+│    Ok(v) => ...                         │
+│    Err(e) => ...                        │
+│  }                                      │
+└─────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────┐
+│  策略收口层 (infra/clients.mbt)          │
+│                                         │
+│  call_with_timeout_and_retry(...)      │  ← 统一超时/重试策略
+│  └─> @async.with_timeout_opt(500, ...) │
+│  └─> @async.retry(ExponentialDelay)    │
+└─────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────┐
+│  底层 Async 库 (moonbitlang/async)       │
+└─────────────────────────────────────────┘
+```
+
+**核心价值**：
+1. **策略集中**：所有超时/重试参数都在 `infra/`，一处修改全局生效
+2. **业务简洁**：业务代码只处理 `Result[X, String]`，不关心策略细节
+3. **易于测试**：业务层测试时 mock `infra`，不需要真实 sleep
+
+### 4.2 infra 层核心 API
+
+**`call_with_timeout_and_retry`**：
+
+```moonbit
+pub async fn[X] call_with_timeout_and_retry(
+  timeout_ms : Int,
+  retry : @async.RetryMethod,
+  f : async () -> X,
+  max_retry? : Int,
+) -> Result[X, String]
+```
+
+**功能**：统一封装"超时 + 重试"策略
+
+**使用示例**：
+
+```moonbit
+// infra/clients.mbt
+pub async fn call_payment_api(order_id : Int) -> Result[String, String] {
+  call_with_timeout_and_retry(
+    3000,
+    @async.ExponentialDelay(initial=100, factor=2, maximum=1000),
+    fn() {
+      http_post("/api/pay", order_id)  // 真实 HTTP 调用
+    }
+  )
+}
+
+// 业务层
+let result = @infra.call_payment_api(101)
+match result {
+  Ok(txn_id) => log("success")
+  Err(e) => log("failed: {e}")
+}
+```
+
+**参数说明**：
+- `timeout_ms`：超时时间（毫秒），超时返回 `Err("timeout")`
+- `retry`：重试策略（`ExponentialDelay` 或 `FixedDelay`）
+- `f`：要执行的操作（async 函数）
+- `max_retry?`：最大重试次数（可选）
+
+### 4.3 如何在项目中使用 infra 层
+
+**步骤 1**：复制 `infra/` 到你的项目
+
+```bash
+cp -r infra/ your-project/infra/
+```
+
+**步骤 2**：修改 `clients.mbt`，替换为真实调用
+
+```moonbit
+// 示例：封装支付 API
+pub async fn call_payment_api(order_id : Int, amount : Int) -> Result[String, String] {
+  call_with_timeout_and_retry(
+    3000,
+    @async.ExponentialDelay(initial=100, factor=2, maximum=1000),
+    fn() {
+      http_post("https://payment-gateway.com/api/charge", json!{...})
+    }
+  )
+}
+```
+
+**步骤 3**：业务层引入 `infra`
+
+```json
+{
+  "import": ["your-username/your-project/infra"]
+}
+```
+
+
 ### 核心原则
 
 - **所有外部依赖**都必须有超时（避免无界等待）
@@ -256,6 +372,51 @@ pub async fn call_api_with_timeout(url : String) -> Result[String, String] {
 | `with_timeout_opt` | 返回 `None`，不影响父任务 | 超时后需要降级处理的场景 |
 
 **推荐**：在 infra 层用 `with_timeout_opt`，转为 `Result` 给业务层。
+
+### infra 层设计思想
+
+**为什么需要 infra 层？**
+
+在真实业务中，异步调用的常见问题：
+
+| 问题 | 症状 | 后果 |
+|------|------|------|
+| **策略散落** | 每个业务文件都写自己的超时/重试逻辑 | 难以统一调参、代码审查困难 |
+| **参数不一致** | A 文件超时 500ms，B 文件超时 300ms | 无法统一治理（例如"所有第三方调用改为 3 秒"） |
+| **测试困难** | 业务代码耦合了 `@async.with_timeout_opt` | 测试时需要真实 sleep，难以 mock |
+
+**infra 层的职责**：
+
+```
+┌─────────────────────────────────────────┐
+│  业务层 (examples/checkout.mbt)          │
+│  @infra.call_payment_with_retry(101)   │  ← 只调用 wrapper
+└─────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────┐
+│  策略收口层 (infra/clients.mbt)          │
+│  call_with_timeout_and_retry(...)       │  ← 统一超时/重试策略
+└─────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────┐
+│  底层 Async 库 (moonbitlang/async)       │
+└─────────────────────────────────────────┘
+```
+
+**核心价值**：
+1. **策略集中**：所有超时/重试参数都在 `infra/`，一处修改全局生效
+2. **业务简洁**：业务代码只处理 `Result[X, String]`，不关心策略细节
+3. **易于测试**：业务层测试时 mock `infra`，不需要真实 sleep
+
+**如何在项目中使用**：
+
+```bash
+# 步骤 1：复制 infra/ 到你的项目
+cp -r infra/ your-project/infra/
+
+# 步骤 2：修改 clients.mbt，替换为真实调用
+# 步骤 3：业务层引入 infra 包
+```
 
 ### 重试策略选择
 
