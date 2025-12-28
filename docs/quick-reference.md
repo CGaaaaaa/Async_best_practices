@@ -135,16 +135,18 @@ pub async fn call_api(url : String) -> Result[String, String] {
 }
 
 // 业务层
-let result = @infra.call_api("https://api.example.com/data")
+let result = @src.call_with_timeout_and_retry(3000, @async.ExponentialDelay(...), fn() {
+  http_get("https://api.example.com/data")
+})
 ```
 
 ### 模式 2：并行查询多个数据源
 
 ```moonbit
 @async.with_task_group(fn(group) {
-  let t1 = group.spawn(fn() { @infra.fetch_user(uid) })
-  let t2 = group.spawn(fn() { @infra.fetch_orders(uid) })
-  let t3 = group.spawn(fn() { @infra.fetch_recommendations(uid) })
+  let t1 = group.spawn(fn() { @src.call_with_timeout_and_retry(1000, ..., fn() { fetch_user(uid) }) })
+  let t2 = group.spawn(fn() { @src.call_with_timeout_and_retry(1000, ..., fn() { fetch_orders(uid) }) })
+  let t3 = group.spawn(fn() { @src.call_with_timeout_and_retry(1000, ..., fn() { fetch_recommendations(uid) }) })
   
   (t1.wait(), t2.wait(), t3.wait())  // 任一失败会取消其他
 })

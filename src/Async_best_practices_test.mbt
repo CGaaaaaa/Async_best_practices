@@ -342,3 +342,37 @@ async test "demo_business_checkout_flow" {
     ),
   )
 }
+
+///|
+async test "call_payment_with_retry_examples" {
+  // order 101: will succeed on attempt 2
+  let r1 = call_payment_with_retry(101)
+  inspect(r1, content="Ok(\"ok\")")
+
+  // order 102: will succeed on attempt 3
+  let r2 = call_payment_with_retry(102)
+  inspect(r2, content="Ok(\"ok\")")
+}
+
+///|
+async test "call_with_timeout_and_retry_success" {
+  let result = call_with_timeout_and_retry(
+    1000,
+    @async.ExponentialDelay(initial=100, factor=2, maximum=1000),
+    fn() { "success" },
+  )
+  inspect(result, content="Ok(\"success\")")
+}
+
+///|
+async test "call_with_timeout_and_retry_timeout" {
+  let result = call_with_timeout_and_retry(
+    50,
+    @async.ExponentialDelay(initial=100, factor=2, maximum=1000),
+    fn() raise {
+      @async.sleep(200)
+      "success"
+    },
+  )
+  inspect(result, content="Err(\"timeout\")")
+}

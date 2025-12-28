@@ -77,7 +77,7 @@
   - `demo_retry_fixed_delay`（每次等待 100ms）
   - `demo_retry_exponential`（100ms → 200ms → 400ms）
 - **瞬态失败重试**：
-  - `infra/clients.mbt`: `call_with_timeout_and_retry`
+  - `src/Async_best_practices.mbt`: `call_with_timeout_and_retry`
   - `examples/retry_timeout`: `retry_then_ok`
 
 #### 限流（Semaphore）
@@ -129,7 +129,7 @@ async fn checkout_order(id : Int) -> Result[String, String] {
 ### 正例（推荐）✅
 
 ```moonbit
-// infra/clients.mbt
+// src/Async_best_practices.mbt
 pub async fn call_payment_with_retry(id : Int) -> Result[String, String] {
   call_with_timeout_and_retry(500, fn() {
     call_payment_api(id)  // 真实调用
@@ -139,7 +139,7 @@ pub async fn call_payment_with_retry(id : Int) -> Result[String, String] {
 // 业务代码 checkout.mbt
 async fn checkout_order(id : Int) -> Result[String, String] {
   // ✅ 业务层只处理 Result，不关心超时/重试细节
-  @infra.call_payment_with_retry(id)
+  @src.call_payment_with_retry(id)
 }
 ```
 
@@ -237,7 +237,7 @@ async fn good_parallel_fetch() -> (User, Order) {
 ┌─────────────────────────────────────────┐
 │  业务层 (examples/checkout.mbt)          │
 │                                         │
-│  @infra.call_payment_with_retry(101)   │  ← 只调用 wrapper
+│  @src.call_payment_with_retry(101)     │  ← 只调用 wrapper
 │  match result {                         │
 │    Ok(v) => ...                         │
 │    Err(e) => ...                        │
@@ -245,7 +245,7 @@ async fn good_parallel_fetch() -> (User, Order) {
 └─────────────────────────────────────────┘
               ↓
 ┌─────────────────────────────────────────┐
-│  策略收口层 (infra/clients.mbt)          │
+│  策略收口层 (src/Async_best_practices.mbt)│
 │                                         │
 │  call_with_timeout_and_retry(...)      │  ← 统一超时/重试策略
 │  └─> @async.with_timeout_opt(500, ...) │
@@ -280,7 +280,7 @@ pub async fn[X] call_with_timeout_and_retry(
 **使用示例**：
 
 ```moonbit
-// infra/clients.mbt
+// src/Async_best_practices.mbt
 pub async fn call_payment_api(order_id : Int) -> Result[String, String] {
   call_with_timeout_and_retry(
     3000,
@@ -292,7 +292,7 @@ pub async fn call_payment_api(order_id : Int) -> Result[String, String] {
 }
 
 // 业务层
-let result = @infra.call_payment_api(101)
+let result = @src.call_payment_with_retry(101)
 match result {
   Ok(txn_id) => log("success")
   Err(e) => log("failed: {e}")
@@ -307,13 +307,11 @@ match result {
 
 ### 4.3 如何在项目中使用 infra 层
 
-**步骤 1**：复制 `infra/` 到你的项目
+**步骤 1**：从 `src/Async_best_practices.mbt` 复制以下函数到你的项目：
+- `call_with_timeout_and_retry`
+- `call_payment_with_retry`（或改为你的业务函数）
 
-```bash
-cp -r infra/ your-project/infra/
-```
-
-**步骤 2**：修改 `clients.mbt`，替换为真实调用
+**步骤 2**：修改函数实现，替换为真实调用
 
 ```moonbit
 // 示例：封装支付 API
@@ -355,7 +353,7 @@ async fn bad_call_api() -> String {
 ### 正例：统一超时封装 ✅
 
 ```moonbit
-// infra/clients.mbt
+// src/Async_best_practices.mbt
 pub async fn call_api_with_timeout(url : String) -> Result[String, String] {
   @async.with_timeout_opt(3000, fn() {  // 3 秒超时
     http_get(url)
@@ -392,11 +390,11 @@ pub async fn call_api_with_timeout(url : String) -> Result[String, String] {
 ```
 ┌─────────────────────────────────────────┐
 │  业务层 (examples/checkout.mbt)          │
-│  @infra.call_payment_with_retry(101)   │  ← 只调用 wrapper
+│  @src.call_payment_with_retry(101)     │  ← 只调用 wrapper
 └─────────────────────────────────────────┘
               ↓
 ┌─────────────────────────────────────────┐
-│  策略收口层 (infra/clients.mbt)          │
+│  策略收口层 (src/Async_best_practices.mbt)│
 │  call_with_timeout_and_retry(...)       │  ← 统一超时/重试策略
 └─────────────────────────────────────────┘
               ↓
@@ -675,7 +673,7 @@ async fn good_use_protect() {
 |------|---------|------|
 | **正常流程** | 验证成功输出 | `examples/checkout`: 订单处理成功 |
 | **超时** | 模拟慢操作，验证超时错误 | `examples/retry_timeout`: `demo_retry_timeout_fail` |
-| **瞬态失败** | 模拟重试后成功 | `infra/clients_test.mbt`: order 101/102 |
+| **瞬态失败** | 模拟重试后成功 | `src/Async_best_practices_test.mbt`: order 101/102 |
 | **取消传播** | 模拟子任务失败，验证兄弟任务被取消 | `examples/task_group`: fail-fast |
 | **并发限制** | 观测最大并发数 | `examples/semaphore_limiter` |
 
@@ -707,7 +705,7 @@ async test "checkout_flow" {
 
 ```moonbit
 async test "timeout_returns_err" {
-  let result = @infra.call_with_timeout_and_retry(50, fn() {
+  let result = @src.call_with_timeout_and_retry(50, fn() {
     @async.sleep(200)  // 操作耗时 200ms，超时 50ms
     "ok"
   })
@@ -786,7 +784,7 @@ async test "retry_then_success" {
 
 **修复**：
 ```moonbit
-// infra/clients.mbt
+// src/Async_best_practices.mbt
 pub const THIRD_PARTY_TIMEOUT : Int = 3000
 
 pub async fn call_third_party_api[X](op : () -> X) -> Result[X, String] {
@@ -858,6 +856,6 @@ validate_input(data) raise { err => return Err(err) }
 **下一步**：
 1. 跑通所有 `examples/`
 2. 用 PR 检查清单审查你的代码
-3. 把 `infra/` 复制到你的项目，开始改造
+3. 从 `src/Async_best_practices.mbt` 复制策略收口层代码到你的项目
 
 Happy Async Programming! 🚀

@@ -18,7 +18,7 @@
 - ❌ 队列使用不当导致内存泄漏或背压失效
 
 **本仓库提供**：
-- ✅ **工程化模板**：`infra/` 层统一封装超时/重试/限流策略
+- ✅ **策略收口模式**：`src/` 中提供超时/重试封装示例
 - ✅ **可运行示例**：`examples/` 从最小闭环到复杂场景，全部可测试
 - ✅ **系统化教材**：`src/` 覆盖所有 Async API，配套 33+ 测试
 - ✅ **最佳实践文档**：`docs/` 提供原则、反模式对比、PR 检查清单
@@ -54,14 +54,14 @@ cat examples/README.md
 
 阅读 [`examples/README.md`](examples/README.md) 中的 checkout 示例，理解：
 1. **业务层**只处理 `Result`，不关心"怎么调用"
-2. **infra 层**统一封装超时/重试策略
+2. **策略收口层**统一封装超时/重试策略（在 `src/` 中）
 3. 用 `inspect` 做快照测试，验证业务逻辑
 
 ```moonbit
 // 业务层代码（简洁、可测试）
 pub async fn checkout_orders(order_ids : Array[Int]) -> String {
   for id in order_ids {
-    match @infra.call_payment_with_retry(id) {  // 策略已在 infra 封装
+    match @src.call_payment_with_retry(id) {  // 策略收口层封装
       Ok(_) => log("order {id} success")
       Err(e) => log("order {id} failed: {e}")
     }
@@ -78,10 +78,6 @@ Async_best_practices/
 │   ├── best_practices.md        # 最佳实践（原则/反模式/检查清单）
 │   ├── quick-reference.md       # 🆕 快速参考（API 速查表）
 │   └── faq.md                   # 🆕 常见问题（FAQ）
-├── infra/                       # 策略收口层（超时/重试/限流）
-│   ├── README.md
-│   ├── clients.mbt              # 通用 wrapper 实现
-│   └── clients_test.mbt
 ├── examples/                    # 可运行的业务示例（从简单到复杂）
 │   ├── checkout/                # 最小业务闭环
 │   ├── task_group/              # 结构化并发与取消传播
@@ -102,7 +98,7 @@ Async_best_practices/
 | **`docs/best_practices.md`** | 核心原则与反模式对比 | 代码审查、架构设计 |
 | 🆕 **`docs/quick-reference.md`** | API 速查表 | 快速查阅常用 API 和模式 |
 | 🆕 **`docs/faq.md`** | 常见问题（28 个） | 遇到问题时快速找答案 |
-| **`infra/`** | 策略收口层模板 | 复制到你的项目，统一异步调用策略 |
+| **`src/`** | 策略收口层示例 | 包含 `call_with_timeout_and_retry` 等封装函数 |
 | **`examples/`** | 6 个渐进式示例 | 从零开始学习 Async |
 | **`src/`** | 完整 API 目录（42 测试） | 快速查找某个 API 的用法 |
 
@@ -129,7 +125,7 @@ Async_best_practices/
 
 ## 💡 核心设计思想
 
-### 1. 策略收口到 infra 层
+### 1. 策略收口模式
 
 **问题**：业务代码散落大量 `@async.with_timeout_opt(500, ...)`，难以统一调参、难以审查
 
@@ -149,7 +145,7 @@ pub async fn call_with_timeout_and_retry(
 }
 
 // 业务层只需调用
-let result = @infra.call_with_timeout_and_retry(500, fn() { ... })
+let result = @src.call_with_timeout_and_retry(500, fn() { ... })
 ```
 
 ### 2. 结构化并发（Structured Concurrency）
@@ -198,7 +194,7 @@ sem.release()
 moon test --target native
 
 # 运行单个包的测试
-moon test --target native infra/
+moon test --target native src/
 moon test --target native examples/checkout/
 moon test --target native examples/api-gateway/
 # 查看所有示例说明
@@ -225,7 +221,7 @@ cat examples/README.md
    - 查阅 `src/Async_best_practices.mbt` 作为 API 手册
 
 2. **写业务代码时**：
-   - 复用 `infra/clients.mbt` 的封装模式
+   - 复用 `src/Async_best_practices.mbt` 中的封装模式
    - 使用 `TaskGroup` 管理并发任务
    - 参考 `examples/` 的组合方式
 
@@ -237,15 +233,16 @@ cat examples/README.md
 
 ## 🔧 如何在你的项目中使用
 
-### 方式 1：直接复制 infra 层
+### 方式 1：复制策略收口层代码
 
 ```bash
-# 复制 infra/ 到你的项目
-cp -r infra/ your-project/infra/
+# 从 src/Async_best_practices.mbt 中复制以下函数到你的项目：
+# - call_with_timeout_and_retry
+# - call_payment_with_retry（或改为你的业务函数）
 
 # 在你的 moon.pkg.json 中引入
 {
-  "import": ["your-username/your-project/infra"]
+  "import": ["CGaaaaaa/async-best-practices/src"]
 }
 ```
 

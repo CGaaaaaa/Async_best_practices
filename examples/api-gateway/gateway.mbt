@@ -141,7 +141,7 @@ async fn Gateway::handle_request_internal(
 async fn Gateway::call_user_service(self : Gateway, request : Request) -> Response raise {
   if self.config.enable_retry {
     // 使用 infra 层的超时+重试封装
-    let result = @infra.call_with_timeout_and_retry(
+    let result = @src.call_with_timeout_and_retry(
       2000,
       @async.ExponentialDelay(initial=100, factor=2, maximum=1000),
       fn() { self.simulate_user_service_call(request) },
@@ -159,7 +159,7 @@ async fn Gateway::call_user_service(self : Gateway, request : Request) -> Respon
 /// 调用订单服务
 async fn Gateway::call_order_service(self : Gateway, request : Request) -> Response raise {
   if self.config.enable_retry {
-    let result = @infra.call_with_timeout_and_retry(
+    let result = @src.call_with_timeout_and_retry(
       2000,
       @async.ExponentialDelay(initial=100, factor=2, maximum=1000),
       fn() { self.simulate_order_service_call(request) },

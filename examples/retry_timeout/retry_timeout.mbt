@@ -3,7 +3,7 @@
 
 pub async fn retry_then_ok() -> Result[Int, String] {
   let attempt = @ref.new(0)
-  @infra.call_with_timeout_and_retry(
+  @src.call_with_timeout_and_retry(
     1_000,
     @async.ExponentialDelay(initial=1, factor=2, maximum=10),
     fn() {
@@ -18,7 +18,7 @@ pub async fn retry_then_ok() -> Result[Int, String] {
 }
 
 pub async fn timeout_returns_err() -> Result[Int, String] {
-  @infra.call_with_timeout_and_retry(
+  @src.call_with_timeout_and_retry(
     1,
     @async.FixedDelay(1),
     fn() {

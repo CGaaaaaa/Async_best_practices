@@ -1,7 +1,10 @@
 {
   "import": [
     "moonbitlang/async",
-    "CGaaaaaa/async-best-practices/infra"
+    "CGaaaaaa/async-best-practices/src"
+  ],
+  "test-import": [
+    "moonbitlang/async"
   ]
 }
 

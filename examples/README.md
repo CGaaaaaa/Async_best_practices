@@ -43,7 +43,7 @@ pub async fn checkout_orders(order_ids : Array[Int]) -> String {
     log.write_string("start order \{id}\n")
     
     // ✅ 业务层只调用 infra wrapper，不关心超时/重试细节
-    let outcome = @infra.call_payment_with_retry(id)
+    let outcome = @src.call_payment_with_retry(id)
     
     match outcome {
       Ok(_) => log.write_string("order \{id} success\n")
@@ -54,7 +54,7 @@ pub async fn checkout_orders(order_ids : Array[Int]) -> String {
 }
 ```
 
-**要点**：业务代码只表达"处理订单列表，记录结果"，超时/重试策略都在 `infra/clients.mbt` 中。
+**要点**：业务代码只表达"处理订单列表，记录结果"，超时/重试策略在 `src/Async_best_practices.mbt` 中封装。
 
 ---
 
@@ -145,7 +145,7 @@ moon test --target native
 ```moonbit
 // 场景 1：操作成功
 pub async fn demo_retry_timeout_success() -> String {
-  let result = @infra.call_with_timeout_and_retry(
+  let result = @src.call_with_timeout_and_retry(
     1000,
     @async.ExponentialDelay(initial=100, factor=2, maximum=1000),
     fn() {
@@ -162,7 +162,7 @@ pub async fn demo_retry_timeout_success() -> String {
 
 // 场景 2：操作超时
 pub async fn demo_retry_timeout_fail() -> String {
-  let result = @infra.call_with_timeout_and_retry(
+  let result = @src.call_with_timeout_and_retry(
     50,
     @async.ExponentialDelay(initial=100, factor=2, maximum=1000),
     fn() {

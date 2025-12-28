@@ -450,7 +450,7 @@ moon test --update  # 更新快照
 
 ```moonbit
 async test "test_timeout" {
-  let result = @infra.call_with_timeout_and_retry(50, fn() {
+  let result = @src.call_with_timeout_and_retry(50, fn() {
     @async.sleep(200)  // 操作耗时 200ms，超时 50ms
     "ok"
   })
