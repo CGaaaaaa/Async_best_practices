@@ -149,7 +149,7 @@ async fn checkout_order(id : Int) -> Result[String, String] {
 ```
 
 **好处**：
-1. 超时/重试策略都在 `infra/`，一处修改全局生效
+1. 超时/重试策略都在 `src/`，一处修改全局生效
 2. 业务代码简洁，只关注业务逻辑
 3. 测试时 mock `infra` 即可，不需要真实 sleep
 
@@ -263,7 +263,7 @@ async fn good_parallel_fetch() -> (User, Order) {
 ```
 
 **核心价值**：
-1. **策略集中**：所有超时/重试参数都在 `infra/`，一处修改全局生效
+1. **策略集中**：所有超时/重试参数都在 `src/`，一处修改全局生效
 2. **业务简洁**：业务代码只处理 `Result[X, String]`，不关心策略细节
 3. **易于测试**：业务层测试时 mock `infra`，不需要真实 sleep
 
@@ -409,15 +409,15 @@ pub async fn call_api_with_timeout(url : String) -> Result[String, String] {
 ```
 
 **核心价值**：
-1. **策略集中**：所有超时/重试参数都在 `infra/`，一处修改全局生效
+1. **策略集中**：所有超时/重试参数都在 `src/`，一处修改全局生效
 2. **业务简洁**：业务代码只处理 `Result[X, String]`，不关心策略细节
 3. **易于测试**：业务层测试时 mock `infra`，不需要真实 sleep
 
 **如何在项目中使用**：
 
 ```bash
-# 步骤 1：复制 infra/ 到你的项目
-cp -r infra/ your-project/infra/
+# 步骤 1：从 src/Async_best_practices.mbt 复制策略收口层代码到你的项目
+# 复制 call_with_timeout_and_retry 等函数
 
 # 步骤 2：修改 clients.mbt，替换为真实调用
 # 步骤 3：业务层引入 infra 包
@@ -724,7 +724,7 @@ async test "timeout_returns_err" {
 ```moonbit no-check
 async test "retry_then_success" {
   let mut attempts = 0
-  let result = @infra.call_with_timeout_and_retry(1000, fn() {
+  let result = @src.call_with_timeout_and_retry(1000, fn() {
     attempts = attempts + 1
     if attempts < 3 {
       raise Failure("transient")  // 前 2 次失败

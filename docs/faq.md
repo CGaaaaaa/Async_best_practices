@@ -468,7 +468,7 @@ async test "test_timeout" {
 ```moonbit
 async test "test_retry" {
   let mut attempts = 0
-  let result = @infra.call_with_timeout_and_retry(1000, fn() {
+  let result = @src.call_with_timeout_and_retry(1000, fn() {
     attempts = attempts + 1
     if attempts < 3 {
       raise Failure("transient")  // 前 2 次失败

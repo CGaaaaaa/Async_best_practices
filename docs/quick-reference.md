@@ -122,7 +122,7 @@ sem.release()
 ### 模式 1：外部 API 调用
 
 ```moonbit
-// infra/clients.mbt
+// src/Async_best_practices.mbt
 pub async fn call_api(url : String) -> Result[String, String] {
   @async.with_timeout_opt(3000, fn() {
     @async.retry(ExponentialDelay(initial=100, factor=2, maximum=1000), fn() {
