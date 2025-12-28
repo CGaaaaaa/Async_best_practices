@@ -613,8 +613,8 @@ fn my_function() -> Int raise {
 
 1. **业务与 infra 分层**：查看 [examples/README.md](../examples/README.md) 中的 checkout 示例
 2. **完整指南**：[最佳实践](./best_practices.md)
-3. **快速查询**：[快速参考](./quick-reference.md)
-4. **API 索引**：[src/README.md](../src/README.md)
+3. **API 参考**：[快速参考](./quick-reference.md)
+4. **运行示例**：`moon test --target native src/` 查看所有 API 示例
 
 ### 获取帮助
 
