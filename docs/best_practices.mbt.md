@@ -110,7 +110,7 @@ description: Best practices for MoonBit Async library. Learn structured concurre
 
 ### 反例（不推荐）❌
 
-```moonbit
+```moonbit no-check
 // 业务代码 checkout.mbt
 async fn checkout_order(id : Int) -> Result[String, String] {
   // ❌ 超时参数散落在业务代码中
@@ -133,7 +133,7 @@ async fn checkout_order(id : Int) -> Result[String, String] {
 
 ### 正例（推荐）✅
 
-```moonbit
+```moonbit no-check
 // src/Async_best_practices.mbt
 pub async fn call_payment_with_retry(id : Int) -> Result[String, String] {
   call_with_timeout_and_retry(500, fn() {
@@ -165,7 +165,7 @@ async fn checkout_order(id : Int) -> Result[String, String] {
 
 ### 反例：野生 spawn ❌
 
-```moonbit
+```moonbit no-check
 async fn bad_parallel_fetch() -> (User, Order) {
   // ❌ 野生 spawn，没有 TaskGroup 管理
   let t1 = @async.spawn(fn() { fetch_user() })
@@ -181,7 +181,7 @@ async fn bad_parallel_fetch() -> (User, Order) {
 
 ### 正例：用 TaskGroup 管理 ✅
 
-```moonbit
+```moonbit no-check
 async fn good_parallel_fetch() -> (User, Order) {
   // ✅ 用 TaskGroup 管理生命周期
   @async.with_task_group(fn(group) {
@@ -201,7 +201,7 @@ async fn good_parallel_fetch() -> (User, Order) {
 
 只在**后台可选任务**时使用：
 
-```moonbit
+```moonbit no-check
 @async.with_task_group(fn(group) {
   let main_task = group.spawn(fn() { 
     // 关键任务：处理订单
@@ -271,7 +271,7 @@ async fn good_parallel_fetch() -> (User, Order) {
 
 **`call_with_timeout_and_retry`**：
 
-```moonbit
+```moonbit no-check
 pub async fn[X] call_with_timeout_and_retry(
   timeout_ms : Int,
   retry : @async.RetryMethod,
@@ -284,7 +284,7 @@ pub async fn[X] call_with_timeout_and_retry(
 
 **使用示例**：
 
-```moonbit
+```moonbit no-check
 // src/Async_best_practices.mbt
 pub async fn call_payment_api(order_id : Int) -> Result[String, String] {
   call_with_timeout_and_retry(
@@ -318,7 +318,7 @@ match result {
 
 **步骤 2**：修改函数实现，替换为真实调用
 
-```moonbit
+```moonbit no-check
 // 示例：封装支付 API
 pub async fn call_payment_api(order_id : Int, amount : Int) -> Result[String, String] {
   call_with_timeout_and_retry(
@@ -348,7 +348,7 @@ pub async fn call_payment_api(order_id : Int, amount : Int) -> Result[String, St
 
 ### 反例：没有超时 ❌
 
-```moonbit
+```moonbit no-check
 async fn bad_call_api() -> String {
   // ❌ 没有超时保护
   http_get("https://slow-api.com/data")  // 如果 API 挂了，会永远等待
@@ -357,7 +357,7 @@ async fn bad_call_api() -> String {
 
 ### 正例：统一超时封装 ✅
 
-```moonbit
+```moonbit no-check
 // src/Async_best_practices.mbt
 pub async fn call_api_with_timeout(url : String) -> Result[String, String] {
   @async.with_timeout_opt(3000, fn() {  // 3 秒超时
@@ -427,7 +427,7 @@ cp -r infra/ your-project/infra/
 
 #### 固定延迟（Fixed Delay）
 
-```moonbit
+```moonbit no-check
 @async.retry(FixedDelay(delay=100, max_retry=3), fn() {
   call_api()
 })
@@ -439,7 +439,7 @@ cp -r infra/ your-project/infra/
 
 #### 指数退避（Exponential Backoff）
 
-```moonbit
+```moonbit no-check
 @async.retry(ExponentialDelay(initial=100, factor=2, maximum=2000), fn() {
   call_api()
 })
@@ -453,7 +453,7 @@ cp -r infra/ your-project/infra/
 
 ### 什么错误不应该重试
 
-```moonbit
+```moonbit no-check
 async fn should_not_retry_example(id : Int) -> Result[String, String] {
   call_api(id) catch {
     // ❌ 不要对这些错误重试：
@@ -480,7 +480,7 @@ async fn should_not_retry_example(id : Int) -> Result[String, String] {
 
 ### 反例：无限并发 ❌
 
-```moonbit
+```moonbit no-check
 async fn bad_batch_process(orders : Array[Order]) {
   @async.with_task_group(fn(group) {
     // ❌ 如果 orders 有 10000 个，会同时发起 10000 个 DB 连接
@@ -500,7 +500,7 @@ async fn bad_batch_process(orders : Array[Order]) {
 
 ### 正例：用 Semaphore 限流 ✅
 
-```moonbit
+```moonbit no-check
 async fn good_batch_process(orders : Array[Order]) {
   let sem = @semaphore.Semaphore::new(20)  // 最大 20 并发
   
@@ -524,7 +524,7 @@ async fn good_batch_process(orders : Array[Order]) {
 
 #### `acquire()`：阻塞等待
 
-```moonbit
+```moonbit no-check
 let sem = @semaphore.Semaphore::new(5)
 sem.acquire()  // 如果没有槽位，会一直等
 // ... 关键区操作
@@ -535,7 +535,7 @@ sem.release()
 
 #### `try_acquire()`：非阻塞尝试
 
-```moonbit
+```moonbit no-check
 let sem = @semaphore.Semaphore::new(5)
 match sem.try_acquire() {
   Some(_) => {
@@ -562,7 +562,7 @@ match sem.try_acquire() {
 
 ### 反例：无界队列 + 无限生产 ❌
 
-```moonbit
+```moonbit no-check
 async fn bad_pipeline() {
   let queue = @aqueue.Queue::new()
   
@@ -591,7 +591,7 @@ async fn bad_pipeline() {
 
 ### 正例：用 Semaphore 控制生产速度 ✅
 
-```moonbit
+```moonbit no-check
 async fn good_pipeline() {
   let queue = @aqueue.Queue::new()
   let sem = @semaphore.Semaphore::new(100)  // 最多 100 条数据在队列中
@@ -636,7 +636,7 @@ async fn good_pipeline() {
 
 **反例：滥用保护** ❌
 
-```moonbit
+```moonbit no-check
 async fn bad_use_protect() {
   // ❌ 整个业务逻辑都保护，取消信号失效
   @async.protect_from_cancel(fn() {
@@ -649,7 +649,7 @@ async fn bad_use_protect() {
 
 **正例：只保护关键区** ✅
 
-```moonbit
+```moonbit no-check
 async fn good_use_protect() {
   let user = fetch_user()      // 可以被取消
   let order = fetch_order()    // 可以被取消
@@ -686,7 +686,7 @@ async fn good_use_protect() {
 
 用 `inspect` 验证完整输出：
 
-```moonbit
+```moonbit no-check
 async test "checkout_flow" {
   let out = checkout_orders([101, 102])
   inspect(
@@ -708,7 +708,7 @@ async test "checkout_flow" {
 
 ### 如何测试超时
 
-```moonbit
+```moonbit no-check
 async test "timeout_returns_err" {
   let result = @src.call_with_timeout_and_retry(50, fn() {
     @async.sleep(200)  // 操作耗时 200ms，超时 50ms
@@ -721,7 +721,7 @@ async test "timeout_returns_err" {
 
 ### 如何测试重试
 
-```moonbit
+```moonbit no-check
 async test "retry_then_success" {
   let mut attempts = 0
   let result = @infra.call_with_timeout_and_retry(1000, fn() {
@@ -774,7 +774,7 @@ async test "retry_then_success" {
 ### 反模式 1：业务代码中散落超时参数
 
 **症状**：
-```moonbit
+```moonbit no-check
 // 文件 A
 @async.with_timeout_opt(500, ...)
 
@@ -788,7 +788,7 @@ async test "retry_then_success" {
 **问题**：无法统一调整（例如"所有第三方调用改为 3 秒"）
 
 **修复**：
-```moonbit
+```moonbit no-check
 // src/Async_best_practices.mbt
 pub const THIRD_PARTY_TIMEOUT : Int = 3000
 
@@ -803,7 +803,7 @@ pub async fn call_third_party_api[X](op : () -> X) -> Result[X, String] {
 ### 反模式 2：野生 spawn
 
 **症状**：
-```moonbit
+```moonbit no-check
 let t1 = @async.spawn(fn() { ... })
 let t2 = @async.spawn(fn() { ... })
 ```
@@ -811,7 +811,7 @@ let t2 = @async.spawn(fn() { ... })
 **问题**：取消传播失效、资源泄漏
 
 **修复**：
-```moonbit
+```moonbit no-check
 @async.with_task_group(fn(group) {
   let t1 = group.spawn(fn() { ... })
   let t2 = group.spawn(fn() { ... })
@@ -822,7 +822,7 @@ let t2 = @async.spawn(fn() { ... })
 ### 反模式 3：对逻辑错误重试
 
 **症状**：
-```moonbit
+```moonbit no-check
 @async.retry(ExponentialDelay(...), fn() {
   validate_input(data) raise {  // 参数错误不应该重试
     err => raise err
@@ -833,7 +833,7 @@ let t2 = @async.spawn(fn() { ... })
 **问题**：参数错误重试 10 次浪费时间
 
 **修复**：
-```moonbit
+```moonbit no-check
 // 先验证参数，再重试网络调用
 validate_input(data) raise { err => return Err(err) }
 
