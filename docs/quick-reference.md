@@ -787,7 +787,7 @@ moon test --target native src/
 
 ## 相关文档
 
-- [最佳实践详解](./best_practices.md)
+- [最佳实践详解](./best_practices.mbt.md)
 - [常见问题 FAQ](./faq.md)
 - [示例代码](../examples/)
 

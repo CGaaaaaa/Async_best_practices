@@ -82,7 +82,6 @@ Async_best_practices/
 ├── README.md -> README.mbt.md # 符号链接（GitHub 显示）
 ├── docs/
 │   ├── best_practices.mbt.md  # 最佳实践（原则/反模式/检查清单）
-│   ├── best_practices.md      # 纯 Markdown 版本
 │   ├── quick-reference.md     # 快速参考（API 速查表）
 │   └── faq.md                 # 常见问题（FAQ）
 ├── examples/                  # 可运行的业务示例（从简单到复杂）

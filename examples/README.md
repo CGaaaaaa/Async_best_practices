@@ -386,7 +386,7 @@ pub async fn Gateway::handle_request(
 2. **运行测试**：每个示例都运行 `moon test --target native` 验证行为
 3. **修改代码**：尝试修改参数，观察结果变化
 4. **参考文档**：
-   - [`docs/best_practices.md`](../docs/best_practices.md) - 完整最佳实践
+   - [`docs/best_practices.mbt.md`](../docs/best_practices.mbt.md) - 完整最佳实践
    - [`docs/quick-reference.md`](../docs/quick-reference.md) - API 速查表
    - [`docs/faq.md`](../docs/faq.md) - 常见问题
 
@@ -395,7 +395,7 @@ pub async fn Gateway::handle_request(
 ## 🔗 相关文档
 
 - [主 README](../README.md) - 项目概览
-- [最佳实践](../docs/best_practices.md) - 完整指南
+- [最佳实践](../docs/best_practices.mbt.md) - 完整指南
 - [快速参考](../docs/quick-reference.md) - API 速查
 - [FAQ](../docs/faq.md) - 常见问题
 

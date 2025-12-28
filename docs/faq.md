@@ -612,7 +612,7 @@ fn my_function() -> Int raise {
 ### 推荐阅读顺序
 
 1. **业务与 infra 分层**：查看 [examples/README.md](../examples/README.md) 中的 checkout 示例
-2. **完整指南**：[最佳实践](./best_practices.md)
+2. **完整指南**：[最佳实践](./best_practices.mbt.md)
 3. **API 参考**：[快速参考](./quick-reference.md)
 4. **运行示例**：`moon test --target native src/` 查看所有 API 示例
 
