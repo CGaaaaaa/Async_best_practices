@@ -53,7 +53,7 @@
 
 ```
 infra/
-├── README.mbt.md         # 本文档
+├── README.md              # 本文档
 ├── clients.mbt           # 通用 wrapper 实现
 ├── clients_test.mbt      # 超时/重试测试用例
 └── moon.pkg.json         # 包配置

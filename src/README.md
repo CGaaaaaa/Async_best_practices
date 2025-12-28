@@ -537,7 +537,7 @@ let result = @src.hello_async()
 **A**：
 1. 在 `src/Async_best_practices.mbt` 中添加新函数
 2. 在 `src/Async_best_practices_test.mbt` 中添加测试
-3. 更新本 `README.mbt.md` 的 API 索引
+3. 更新本 `README.md` 的 API 索引
 4. 提交 PR
 
 ---

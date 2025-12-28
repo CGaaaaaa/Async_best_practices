@@ -50,7 +50,7 @@ moon test --target native
 
 ### 10 分钟理解核心思想
 
-阅读 [`examples/checkout`](examples/checkout/README.mbt.md) 示例，理解：
+阅读 [`examples/checkout`](examples/checkout/README.md) 示例，理解：
 1. **业务层**只处理 `Result`，不关心"怎么调用"
 2. **infra 层**统一封装超时/重试策略
 3. 用 `inspect` 做快照测试，验证业务逻辑
@@ -72,7 +72,6 @@ pub async fn checkout_orders(order_ids : Array[Int]) -> String {
 ```
 Async_best_practices/
 ├── README.md                    # 本文件（GitHub 首页）
-├── README_detailed.md           # 详细架构设计与学习路径
 ├── docs/
 │   ├── best_practices.md        # 最佳实践（原则/反模式/检查清单）
 │   ├── quick-reference.md       # 🆕 快速参考（API 速查表）
