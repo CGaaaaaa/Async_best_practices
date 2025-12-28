@@ -72,11 +72,13 @@ pub async fn checkout_orders(order_ids : Array[Int]) -> String {
 ```
 Async_best_practices/
 ├── README.md                    # 本文件（GitHub 首页）
-├── README.mbt.md                # 详细架构设计与学习路径
+├── README_detailed.md           # 详细架构设计与学习路径
 ├── docs/
-│   └── best_practices.mbt.md   # 最佳实践（原则/反模式/检查清单）
+│   ├── best_practices.md        # 最佳实践（原则/反模式/检查清单）
+│   ├── quick-reference.md       # 🆕 快速参考（API 速查表）
+│   └── faq.md                   # 🆕 常见问题（FAQ）
 ├── infra/                       # 策略收口层（超时/重试/限流）
-│   ├── README.mbt.md
+│   ├── README.md
 │   ├── clients.mbt              # 通用 wrapper 实现
 │   └── clients_test.mbt
 ├── examples/                    # 可运行的业务示例（从简单到复杂）
@@ -84,9 +86,10 @@ Async_best_practices/
 │   ├── task_group/              # 结构化并发与取消传播
 │   ├── retry_timeout/           # 统一超时/重试
 │   ├── semaphore_limiter/       # 限流与并发控制
-│   └── pipeline_queue/          # 生产者-消费者流水线
-└── src/                         # 主教学包（系统化 API 示例 + 33+ 测试）
-    ├── README.mbt.md
+│   ├── pipeline_queue/          # 生产者-消费者流水线
+│   └── api-gateway/             # 🆕 综合真实案例（API 网关）
+└── src/                         # 主教学包（系统化 API 示例 + 42 测试）
+    ├── README.md
     ├── Async_best_practices.mbt
     └── Async_best_practices_test.mbt
 ```
@@ -95,30 +98,35 @@ Async_best_practices/
 
 | 目录/文件 | 作用 | 适用场景 |
 |-----------|------|----------|
-| **`docs/best_practices.mbt.md`** | 核心原则与反模式对比 | 代码审查、架构设计 |
+| **`docs/best_practices.md`** | 核心原则与反模式对比 | 代码审查、架构设计 |
+| 🆕 **`docs/quick-reference.md`** | API 速查表 | 快速查阅常用 API 和模式 |
+| 🆕 **`docs/faq.md`** | 常见问题（28 个） | 遇到问题时快速找答案 |
 | **`infra/`** | 策略收口层模板 | 复制到你的项目，统一异步调用策略 |
-| **`examples/`** | 5 个渐进式示例 | 从零开始学习 Async |
-| **`src/`** | 完整 API 目录 | 快速查找某个 API 的用法 |
+| **`examples/`** | 6 个渐进式示例 | 从零开始学习 Async |
+| **`src/`** | 完整 API 目录（42 测试） | 快速查找某个 API 的用法 |
 
 ## 🎯 学习路径
 
 ### 初级（30 分钟）
 
-1. **阅读**：[`docs/best_practices.mbt.md`](docs/best_practices.mbt.md) 的"总原则"章节
+1. **阅读**：[`docs/best_practices.md`](docs/best_practices.md) 的"总原则"章节
 2. **运行**：`examples/checkout`（最小闭环示例）
 3. **理解**：业务层与 infra 层的职责分离
+4. 🆕 **查阅**：[`docs/quick-reference.md`](docs/quick-reference.md)（API 速查表）
 
 ### 中级（1 小时）
 
 1. **运行**：`examples/task_group`（结构化并发）
 2. **运行**：`examples/retry_timeout`（超时与重试）
 3. **对比**：`src/Async_best_practices.mbt` 中的对应章节
+4. 🆕 **遇到问题？查阅 [`docs/faq.md`](docs/faq.md)**
 
 ### 高级（2 小时）
 
 1. **运行**：`examples/semaphore_limiter`（限流）+ `examples/pipeline_queue`（队列）
-2. **实践**：把你项目的异步调用改造为 infra 封装
-3. **检查**：用 `docs/best_practices.mbt.md` 的 PR 检查清单审查代码
+2. 🆕 **综合案例**：`examples/api-gateway`（生产级 API 网关）
+3. **实践**：把你项目的异步调用改造为 infra 封装
+4. **检查**：用 `docs/best_practices.md` 的 PR 检查清单审查代码
 
 ## 💡 核心设计思想
 
@@ -180,10 +188,11 @@ sem.release()
 | [`examples/retry_timeout`](examples/retry_timeout/) | 超时/重试策略 | 成功/超时/瞬态失败 | 3️⃣ |
 | [`examples/semaphore_limiter`](examples/semaphore_limiter/) | 并发限流 | 最大并发观测 | 4️⃣ |
 | [`examples/pipeline_queue`](examples/pipeline_queue/) | 生产者-消费者 | 并行消费+汇总 | 5️⃣ |
+| 🆕 [`examples/api-gateway`](examples/api-gateway/) | **生产级API网关** | 路由/限流/重试/健康检查 | 6️⃣ 综合 |
 
 ## 🧪 测试策略
 
-本仓库所有示例都配套 `async test`：
+本仓库所有示例都配套 `async test`（**42 个测试，100% 通过**）：
 
 ```bash
 # 运行所有测试
@@ -192,7 +201,10 @@ moon test --target native
 # 运行单个包的测试
 moon test --target native infra/
 moon test --target native examples/checkout/
+moon test --target native examples/api-gateway/
 ```
+
+**最新测试结果**：✅ Total tests: 42, passed: 42, failed: 0
 
 ### 测试覆盖的场景
 
@@ -217,9 +229,10 @@ moon test --target native examples/checkout/
    - 参考 `examples/` 的组合方式
 
 3. **代码审查时**：
-   - 对照 `docs/best_practices.mbt.md` 的 PR 检查清单
+   - 对照 `docs/best_practices.md` 的 PR 检查清单
    - 确保外部调用都有超时+重试
    - 确保并发任务都在 TaskGroup 内
+   - 🆕 快速查阅：[`docs/quick-reference.md`](docs/quick-reference.md)
 
 ## 🔧 如何在你的项目中使用
 

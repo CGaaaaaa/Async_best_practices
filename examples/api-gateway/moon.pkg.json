@@ -1,0 +1,11 @@
+{
+  "import": [
+    "CGaaaaaa/async-best-practices/infra",
+    "moonbitlang/async",
+    "moonbitlang/async/semaphore"
+  ],
+  "test-import": [
+    "moonbitlang/async"
+  ]
+}
+
