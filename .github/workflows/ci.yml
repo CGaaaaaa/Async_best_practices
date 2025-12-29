@@ -24,6 +24,15 @@ jobs:
       
       - name: Verify MoonBit installation
         run: moon info --target native
+        
+      - name: Check async package version
+        run: |
+          echo "Checking async package version..."
+          cat moon.mod.json | grep async
+          echo "Cleaning and rebuilding dependencies..."
+          moon clean || true
+          rm -rf .mooncakes/ || true
+          moon update
       
       - name: Clean build cache
         run: |
