@@ -11,14 +11,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install MoonBit (placeholder)
+        with:
+          fetch-depth: 0
+      
+      - name: Install MoonBit
         run: |
-          echo "Ensure MoonBit toolchain is available on runner"
-          # If you have a setup script, run it here.
-      - name: Run moon info
-        run: moon info || true
-      - name: Run moon check
-        run: moon check
+          curl -fsSL https://cli.moonbitlang.cn/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+      
+      - name: Update MoonBit registry
+        run: moon update
+      
+      - name: Verify MoonBit installation
+        run: moon info --target native
+      
+      - name: Clean build cache
+        run: |
+          moon clean || true
+          rm -rf target/ .mooncakes/ || true
+      
       - name: Run tests
         run: moon test --target native
 
