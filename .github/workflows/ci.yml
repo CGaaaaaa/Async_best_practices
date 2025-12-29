@@ -43,6 +43,18 @@ jobs:
           moon clean || true
           rm -rf target/ .mooncakes/ || true
       
+      - name: Fix async package (add is_being_cancelled export)
+        run: |
+          echo "Adding is_being_cancelled export to async.mbt..."
+          if [ -f ".mooncakes/moonbitlang/async/src/async.mbt" ]; then
+            # 在第 99 行后添加导出
+            sed -i '99a pub using @coroutine {is_being_cancelled}' .mooncakes/moonbitlang/async/src/async.mbt
+            echo "✅ Added is_being_cancelled export"
+            grep -n "is_being_cancelled" .mooncakes/moonbitlang/async/src/async.mbt || echo "Warning: export not found"
+          else
+            echo "⚠️  async.mbt not found, skipping fix"
+          fi
+      
       - name: Run tests
         run: |
           # 运行测试并捕获输出
