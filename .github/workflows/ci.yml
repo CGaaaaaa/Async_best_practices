@@ -30,13 +30,13 @@ jobs:
           echo "Checking async package version..."
           cat moon.mod.json | grep async
           echo "MoonBit version info:"
-          moon info --target native 2>&1 | head -5 || true
+          moon info --target native 2>&1 | head -10 || true
           echo "Cleaning and rebuilding dependencies..."
           moon clean || true
           rm -rf .mooncakes/ target/ || true
           moon update
-          echo "Verifying async package installation..."
-          ls -la .mooncakes/moonbitlang/async/src/internal/coroutine/ 2>/dev/null | head -5 || echo "Cannot list coroutine directory"
+          echo "Checking if is_being_cancelled exists in async package..."
+          find .mooncakes/moonbitlang/async -name "*.mbt" -exec grep -l "is_being_cancelled" {} \; 2>/dev/null | head -3 || echo "is_being_cancelled not found in async package"
       
       - name: Clean build cache
         run: |
