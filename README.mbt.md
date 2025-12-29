@@ -10,34 +10,29 @@ description: Learn MoonBit Async by running examples. Best practices for moonbit
 
 ## 核心概念
 
-### TaskGroup (任务组)
-结构化并发的基本单元，管理一组相关任务的创建、等待和取消。
+| 概念 | 描述 |
+|------|------|
+| **TaskGroup** | 结构化并发的基本单元，管理一组相关任务的创建、等待和取消 |
+| **Timeout** | 为异步操作设置最大执行时间，超时后自动取消并返回 `None` 或 `Err` |
+| **Retry** | 在失败时自动重试异步操作，支持指数退避、固定延迟等策略 |
+| **Semaphore** | 限制同时执行的并发任务数量，用于资源保护和限流 |
+| **Queue** | 无界缓冲队列，用于生产者-消费者模式的数据传递 |
 
-### Timeout (超时)
-为异步操作设置最大执行时间，超时后自动取消并返回 `None` 或 `Err`。
+## 基本用法
 
-### Retry (重试)
-在失败时自动重试异步操作，支持指数退避、固定延迟等策略。
-
-### Semaphore (信号量)
-限制同时执行的并发任务数量，用于资源保护和限流。
-
-### Queue (队列)
-无界缓冲队列，用于生产者-消费者模式的数据传递。
-
-## 快速开始
-
-### 基本用法
+### 结构化并发
 
 ```moonbit no-check
-// 结构化并发
 @async.with_task_group(fn(group) {
   let t1 = group.spawn(fn() { fetch_user(uid) })
   let t2 = group.spawn(fn() { fetch_orders(uid) })
   (t1.wait(), t2.wait())
 })
+```
 
-// 超时控制
+### 超时控制
+
+```moonbit no-check
 let result = @async.with_timeout_opt(500, fn() {
   slow_operation()
 })
@@ -45,8 +40,11 @@ match result {
   Some(v) => println("成功: \{v}")
   None => println("超时")
 }
+```
 
-// 重试机制
+### 重试机制
+
+```moonbit no-check
 let value = @async.retry(
   @async.ExponentialDelay(100, 2.0, 1000),
   fn() { unreliable_operation() },
@@ -54,7 +52,48 @@ let value = @async.retry(
 )
 ```
 
-### 策略收口模式
+### 并发控制
+
+```moonbit no-check
+// 使用 Semaphore 限制并发
+let sem = @semaphore.Semaphore::new(5)
+
+@async.with_task_group(fn(group) {
+  for item in items {
+    group.spawn(fn() {
+      sem.acquire()
+      try {
+        process_item(item)
+      } finally {
+        sem.release()
+      }
+    })
+  }
+})
+```
+
+### 生产者-消费者
+
+```moonbit no-check
+let q = @aqueue.Queue::new()
+@async.with_task_group(fn(group) {
+  group.spawn(fn() {
+    for i in 0..<10 {
+      q.put(i)
+    }
+  })
+  group.spawn(fn() {
+    for _ in 0..<10 {
+      let item = q.get()
+      process(item)
+    }
+  })
+})
+```
+
+## 策略收口模式
+
+将超时、重试等策略从业务代码中抽离，统一封装在策略收口层。
 
 ```moonbit no-check
 // 业务层代码
@@ -88,50 +127,21 @@ pub async fn call_with_timeout_and_retry(
 }
 ```
 
-### 并发控制
-
-```moonbit no-check
-// 使用 Semaphore 限制并发
-let sem = @semaphore.Semaphore::new(5)  // 最多 5 个并发
-
-@async.with_task_group(fn(group) {
-  for item in items {
-    group.spawn(fn() {
-      sem.acquire()  // 获取许可
-      try {
-        process_item(item)
-      } finally {
-        sem.release()  // 释放许可
-      }
-    })
-  }
-})
-
-// 使用 Queue 实现生产者-消费者
-let q = @aqueue.Queue::new()
-@async.with_task_group(fn(group) {
-  // 生产者
-  group.spawn(fn() {
-    for i in 0..<10 {
-      q.put(i)
-    }
-  })
-  // 消费者
-  group.spawn(fn() {
-    for _ in 0..<10 {
-      let item = q.get()
-      process(item)
-    }
-  })
-})
-```
+**优势**：
+- 统一调参：所有超时/重试策略集中管理
+- 易于审查：策略变更只需修改一处
+- 业务简洁：业务代码不包含策略细节
 
 ## API 参考
 
 ### TaskGroup
 
-`with_task_group[T](f: (TaskGroup) -> T) -> T`
-创建任务组，管理并发任务的创建、等待和取消。
+| API | 描述 |
+|-----|------|
+| `with_task_group[T](f: (TaskGroup) -> T) -> T` | 创建任务组，管理并发任务的创建、等待和取消 |
+| `group.spawn[T](f: async () -> T) -> Task[T]` | 在任务组中创建新任务 |
+| `group.spawn_bg(f: async () -> Unit) -> Unit` | 创建后台任务，不等待结果 |
+| `task.wait() -> T` | 等待任务完成并获取结果 |
 
 ```moonbit no-check
 @async.with_task_group(fn(group) {
@@ -141,19 +151,12 @@ let q = @aqueue.Queue::new()
 })
 ```
 
-`group.spawn[T](f: async () -> T) -> Task[T]`
-在任务组中创建新任务。
-
-`group.spawn_bg(f: async () -> Unit) -> Unit`
-创建后台任务，不等待结果。
-
-`task.wait() -> T`
-等待任务完成并获取结果。
-
 ### Timeout
 
-`with_timeout_opt[T](timeout_ms: Int, f: async () -> T) -> Option[T]`
-执行异步操作，超时返回 `None`。
+| API | 描述 |
+|-----|------|
+| `with_timeout_opt[T](timeout_ms: Int, f: async () -> T) -> Option[T]` | 执行异步操作，超时返回 `None` |
+| `with_timeout[T](timeout_ms: Int, f: async () -> T) -> T` | 执行异步操作，超时抛出 `TimeoutError` |
 
 ```moonbit no-check
 let result = @async.with_timeout_opt(500, fn() { slow_operation() })
@@ -163,13 +166,13 @@ match result {
 }
 ```
 
-`with_timeout[T](timeout_ms: Int, f: async () -> T) -> T`
-执行异步操作，超时抛出 `TimeoutError`。
-
 ### Retry
 
-`retry[T](method: RetryMethod, f: async () -> T, max_retry?: Int) -> T`
-重试异步操作。
+| API | 描述 |
+|-----|------|
+| `retry[T](method: RetryMethod, f: async () -> T, max_retry?: Int) -> T` | 重试异步操作 |
+| `ExponentialDelay(initial_ms: Int, multiplier: Float, max_ms: Int) -> RetryMethod` | 指数退避重试策略 |
+| `FixedDelay(ms: Int) -> RetryMethod` | 固定延迟重试策略 |
 
 ```moonbit no-check
 let value = @async.retry(
@@ -179,49 +182,37 @@ let value = @async.retry(
 )
 ```
 
-`ExponentialDelay(initial_ms: Int, multiplier: Float, max_ms: Int) -> RetryMethod`
-指数退避重试策略。
-
-`FixedDelay(ms: Int) -> RetryMethod`
-固定延迟重试策略。
-
 ### Semaphore
 
-`Semaphore::new(permits: Int) -> Semaphore`
-创建信号量，限制并发数。
+| API | 描述 |
+|-----|------|
+| `Semaphore::new(permits: Int) -> Semaphore` | 创建信号量，限制并发数 |
+| `acquire() -> Unit` | 获取许可，如果没有可用许可则等待 |
+| `release() -> Unit` | 释放许可 |
 
 ```moonbit no-check
 let sem = @semaphore.Semaphore::new(5)
-sem.acquire()  // 获取许可
+sem.acquire()
 try {
   do_work()
 } finally {
-  sem.release()  // 释放许可
+  sem.release()
 }
 ```
 
-`acquire() -> Unit`
-获取许可，如果没有可用许可则等待。
-
-`release() -> Unit`
-释放许可。
-
 ### Queue
 
-`Queue::new[T]() -> Queue[T]`
-创建无界队列。
+| API | 描述 |
+|-----|------|
+| `Queue::new[T]() -> Queue[T]` | 创建无界队列 |
+| `put(item: T) -> Unit` | 向队列放入元素 |
+| `get() -> T` | 从队列获取元素，队列为空时阻塞 |
 
 ```moonbit no-check
 let q = @aqueue.Queue::new()
-q.put(item)  // 放入元素
-let item = q.get()  // 获取元素（阻塞）
+q.put(item)
+let item = q.get()
 ```
-
-`put(item: T) -> Unit`
-向队列放入元素。
-
-`get() -> T`
-从队列获取元素，队列为空时阻塞。
 
 ## 完整示例
 
@@ -280,14 +271,12 @@ pub async fn pipeline_sum(n : Int, workers : Int) -> Int {
   let sum = @std.ref::Ref::new(0)
   
   @async.with_task_group(fn(group) {
-    // 生产者
     group.spawn(fn() {
       for i in 1..=n {
         q.put(i)
       }
     })
     
-    // 消费者
     for _ in 0..<workers {
       group.spawn(fn() {
         for _ in 0..<n / workers {
@@ -303,15 +292,6 @@ pub async fn pipeline_sum(n : Int, workers : Int) -> Int {
 ```
 
 ## 设计原理
-
-### 策略收口模式
-
-将超时、重试等策略从业务代码中抽离，统一封装在策略收口层。业务层只关心业务逻辑，策略层负责可靠性保障。
-
-**优势**：
-- 统一调参：所有超时/重试策略集中管理
-- 易于审查：策略变更只需修改一处
-- 业务简洁：业务代码不包含策略细节
 
 ### 结构化并发
 
@@ -334,6 +314,25 @@ pub async fn pipeline_sum(n : Int, workers : Int) -> Int {
 - `Queue` 使用无界缓冲，避免背压导致的阻塞
 - `Semaphore` 使用原子操作，避免锁竞争
 - `TaskGroup` 使用弱引用，避免循环依赖导致的内存泄漏
+
+## 常见问题
+
+### 为什么需要策略收口模式？
+
+业务代码散落大量 `@async.with_timeout_opt(500, ...)`，难以统一调参、难以审查。策略收口层将超时、重试等策略统一封装，业务层只关心业务逻辑。
+
+### 为什么使用 TaskGroup 而不是直接 spawn？
+
+野生 `spawn` 导致任务失控，取消信号无法传播。`TaskGroup` 确保任务生命周期可控，父任务取消时子任务自动取消。
+
+### Queue 是无界的，会不会导致内存泄漏？
+
+`Queue` 使用无界缓冲，避免背压导致的阻塞。真实业务里建议结合 Semaphore/限速，避免生产者无限制 put 导致内存膨胀。
+
+### 如何选择合适的重试策略？
+
+- **指数退避**：适用于网络请求、API 调用等可能因临时故障失败的操作
+- **固定延迟**：适用于需要固定间隔重试的场景
 
 ## 仓库结构
 
@@ -393,4 +392,3 @@ moon fmt
 ## 许可证
 
 [Apache 2.0](LICENSE)
-
