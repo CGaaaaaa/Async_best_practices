@@ -1,13 +1,13 @@
 ///|
 /// Queue 示例：生产者-消费者流水线（producer/consumer）。
 ///
-/// 注意：`aqueue.Queue` 是无界缓冲。
+/// 注意：`async.Queue` 是无界缓冲。
 /// 真实业务里建议结合 Semaphore/限速，避免生产者无限制 put 导致内存膨胀。
 
 ///|
 /// 把 1..=n 放入队列，启动 `workers` 个消费者并行消费并求和。
 pub async fn pipeline_sum(n : Int, workers : Int) -> Int {
-  let q : @aqueue.Queue[Int] = @aqueue.Queue::new()
+  let q : @async.Queue[Int] = @async.Queue::new()
   @async.with_task_group(fn(group) {
     // producer
     group.spawn_bg(fn() {
