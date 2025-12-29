@@ -8,137 +8,66 @@ description: Learn MoonBit Async by running examples. Best practices for moonbit
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Moon](https://img.shields.io/badge/moon-latest-orange)](https://www.moonbitlang.com/)
 
-> **Learn MoonBit Async by running examples** — 通过运行示例学习 MoonBit 异步编程
+## 核心概念
 
-## 📖 项目简介
+### TaskGroup (任务组)
+结构化并发的基本单元，管理一组相关任务的创建、等待和取消。
 
-这是一个**生产级的 MoonBit Async 最佳实践示例库**，旨在帮助开发者和 AI 快速掌握 `moonbitlang/async` 的高效用法。
+### Timeout (超时)
+为异步操作设置最大执行时间，超时后自动取消并返回 `None` 或 `Err`。
 
-### 为什么需要这个仓库？
+### Retry (重试)
+在失败时自动重试异步操作，支持指数退避、固定延迟等策略。
 
-异步编程容易陷入以下问题：
-- ❌ 超时/重试逻辑散落在业务代码各处，难以统一治理
-- ❌ 缺乏结构化并发（野生 spawn），取消传播失效
-- ❌ 没有限流导致资源耗尽（DB 连接、API 调用）
-- ❌ 队列使用不当导致内存泄漏或背压失效
+### Semaphore (信号量)
+限制同时执行的并发任务数量，用于资源保护和限流。
 
-**本仓库提供**：
-- ✅ **策略收口模式**：`src/` 中提供超时/重试封装示例
-- ✅ **可运行示例**：`examples/` 从最小闭环到复杂场景，全部可测试
-- ✅ **系统化教材**：`src/` 覆盖所有 Async API，配套 44+ 测试
-- ✅ **最佳实践文档**：`docs/` 提供原则、反模式对比、PR 检查清单
+### Queue (队列)
+无界缓冲队列，用于生产者-消费者模式的数据传递。
 
-## 🚀 快速开始
+## 快速开始
 
-### 环境要求
-
-- **MoonBit 工具链**：`moon` CLI（[安装指南](https://www.moonbitlang.com/docs/start)）
-- **推荐 Backend**：`--target native`（`wasm-gc` 因 `extern "C"` 暂不支持）
-
-### 5 分钟上手
-
-```bash
-# 克隆仓库
-git clone https://github.com/CGaaaaaa/Async_best_practices.git
-cd Async_best_practices
-
-# 运行类型检查
-moon check --target native
-
-# 运行所有测试（44+ async tests）
-moon test --target native
-
-# 查看最小业务示例
-cd examples/checkout
-moon test --target native
-# 或查看所有示例说明
-cat examples/README.md
-```
-
-### 10 分钟理解核心思想
-
-阅读 [`examples/README.md`](examples/README.md) 中的 checkout 示例，理解：
-1. **业务层**只处理 `Result`，不关心"怎么调用"
-2. **策略收口层**统一封装超时/重试策略（在 `src/` 中）
-3. 用 `inspect` 做快照测试，验证业务逻辑
+### 基本用法
 
 ```moonbit no-check
-// 业务层代码（简洁、可测试）
+// 结构化并发
+@async.with_task_group(fn(group) {
+  let t1 = group.spawn(fn() { fetch_user(uid) })
+  let t2 = group.spawn(fn() { fetch_orders(uid) })
+  (t1.wait(), t2.wait())
+})
+
+// 超时控制
+let result = @async.with_timeout_opt(500, fn() {
+  slow_operation()
+})
+match result {
+  Some(v) => println("成功: \{v}")
+  None => println("超时")
+}
+
+// 重试机制
+let value = @async.retry(
+  @async.ExponentialDelay(100, 2.0, 1000),
+  fn() { unreliable_operation() },
+  3
+)
+```
+
+### 策略收口模式
+
+```moonbit no-check
+// 业务层代码
 pub async fn checkout_orders(order_ids : Array[Int]) -> String {
   for id in order_ids {
-    match @src.call_payment_with_retry(id) {  // 策略收口层封装
+    match @src.call_payment_with_retry(id) {
       Ok(_) => log("order {id} success")
       Err(e) => log("order {id} failed: {e}")
     }
   }
 }
-```
 
-## 📂 仓库结构
-
-```
-Async_best_practices/
-├── README.mbt.md              # 本文件（GitHub 首页，.mbt.md 格式）
-├── README.md -> README.mbt.md # 符号链接（GitHub 显示）
-├── docs/
-│   ├── best_practices.mbt.md  # 最佳实践（原则/反模式/检查清单）
-│   ├── quick-reference.md     # 快速参考（API 速查表）
-│   └── faq.md                 # 常见问题（FAQ）
-├── examples/                  # 可运行的业务示例（从简单到复杂）
-│   ├── checkout/              # 最小业务闭环
-│   ├── task_group/            # 结构化并发与取消传播
-│   ├── retry_timeout/         # 统一超时/重试
-│   ├── semaphore_limiter/    # 限流与并发控制
-│   ├── pipeline_queue/        # 生产者-消费者流水线
-│   └── api-gateway/           # 综合真实案例（API 网关）
-└── src/                       # 主教学包（系统化 API 示例 + 44 测试）
-    ├── Async_best_practices.mbt
-    └── Async_best_practices_test.mbt
-```
-
-### 各部分详细说明
-
-| 目录/文件 | 作用 | 适用场景 |
-|-----------|------|----------|
-| **`docs/best_practices.mbt.md`** | 核心原则与反模式对比 | 代码审查、架构设计 |
-| **`docs/quick-reference.md`** | API 速查表 | 快速查阅常用 API 和模式 |
-| **`docs/faq.md`** | 常见问题（28 个） | 遇到问题时快速找答案 |
-| **`src/`** | 策略收口层示例 | 包含 `call_with_timeout_and_retry` 等封装函数 |
-| **`examples/`** | 6 个渐进式示例 | 从零开始学习 Async |
-| **`src/`** | 完整 API 目录（44 测试） | 快速查找某个 API 的用法 |
-
-## 🎯 学习路径
-
-### 快速上手（约 30 分钟）
-
-1. **阅读**：[`docs/best_practices.mbt.md`](docs/best_practices.mbt.md) 的"总原则"章节
-2. **运行**：查看 [`examples/README.md`](examples/README.md) 中的 checkout 示例（最小闭环）
-3. **理解**：业务层与策略收口层的职责分离
-4. **查阅**：[`docs/quick-reference.md`](docs/quick-reference.md)（API 速查表）
-
-### 深入学习（约 1 小时）
-
-1. **运行**：查看 [`examples/README.md`](examples/README.md) 中的 task_group 示例（结构化并发）
-2. **运行**：查看 [`examples/README.md`](examples/README.md) 中的 retry_timeout 示例（超时与重试）
-3. **对比**：`src/Async_best_practices.mbt` 中的对应章节
-4. **遇到问题？查阅 [`docs/faq.md`](docs/faq.md)**
-
-### 综合应用（约 2 小时）
-
-1. **运行**：查看 [`examples/README.md`](examples/README.md) 中的 semaphore_limiter 和 pipeline_queue 示例
-2. **综合案例**：查看 [`examples/README.md`](examples/README.md) 中的 api-gateway 示例（生产级 API 网关）
-3. **实践**：把你项目的异步调用改造为策略收口层封装
-4. **检查**：用 `docs/best_practices.mbt.md` 的 PR 检查清单审查代码
-
-## 💡 核心设计思想
-
-### 1. 策略收口模式
-
-**问题**：业务代码散落大量 `@async.with_timeout_opt(500, ...)`，难以统一调参、难以审查
-
-**方案**：
-```moonbit no-check
-// src/Async_best_practices.mbt
+// 策略收口层（src/Async_best_practices.mbt）
 pub async fn call_with_timeout_and_retry(
   timeout_ms : Int,
   retry : @async.RetryMethod,
@@ -157,80 +86,278 @@ pub async fn call_with_timeout_and_retry(
     err => Err(err.to_string())
   }
 }
-
-// 业务层只需调用
-let result = @src.call_with_timeout_and_retry(500, @async.ExponentialDelay(...), fn() { ... })
 ```
 
-### 2. 结构化并发（Structured Concurrency）
+### 并发控制
 
-**问题**：野生 `spawn` 导致任务失控，取消信号无法传播
-
-**方案**：
 ```moonbit no-check
+// 使用 Semaphore 限制并发
+let sem = @semaphore.Semaphore::new(5)  // 最多 5 个并发
+
 @async.with_task_group(fn(group) {
-  let t1 = group.spawn(fn() { fetch_user(uid) })
-  let t2 = group.spawn(fn() { fetch_orders(uid) })
-  let t3 = group.spawn(fn() { fetch_recommendations(uid) })
-  
-  // 所有任务都在 group 内，生命周期可控
-  // 任何一个失败，其他任务会被自动取消
-  (t1.wait(), t2.wait(), t3.wait())
+  for item in items {
+    group.spawn(fn() {
+      sem.acquire()  // 获取许可
+      try {
+        process_item(item)
+      } finally {
+        sem.release()  // 释放许可
+      }
+    })
+  }
+})
+
+// 使用 Queue 实现生产者-消费者
+let q = @aqueue.Queue::new()
+@async.with_task_group(fn(group) {
+  // 生产者
+  group.spawn(fn() {
+    for i in 0..<10 {
+      q.put(i)
+    }
+  })
+  // 消费者
+  group.spawn(fn() {
+    for _ in 0..<10 {
+      let item = q.get()
+      process(item)
+    }
+  })
 })
 ```
 
-## ✅ 测试覆盖
+## API 参考
 
-所有示例和 API 都有完整的测试覆盖：
+### TaskGroup
 
-```bash
-moon test --target native
-# Total tests: 44, passed: 44, failed: 0
+`with_task_group[T](f: (TaskGroup) -> T) -> T`
+创建任务组，管理并发任务的创建、等待和取消。
+
+```moonbit no-check
+@async.with_task_group(fn(group) {
+  let t1 = group.spawn(fn() { task1() })
+  let t2 = group.spawn(fn() { task2() })
+  (t1.wait(), t2.wait())
+})
 ```
 
-测试覆盖的场景：
-- ✅ **成功路径**：正常执行完成
-- ✅ **超时**：超时返回 `None` 或 `Err`
-- ✅ **瞬态失败**：重试后成功
-- ✅ **取消传播**：父任务取消时子任务也取消
-- ✅ **并发限制**：最大并发数不超过限制
+`group.spawn[T](f: async () -> T) -> Task[T]`
+在任务组中创建新任务。
 
-## 🤖 给 AI Agent 的使用说明
+`group.spawn_bg(f: async () -> Unit) -> Unit`
+创建后台任务，不等待结果。
 
-如果你是 AI Agent，建议：
+`task.wait() -> T`
+等待任务完成并获取结果。
 
-1. **学习阶段**：
-   - 优先阅读 `docs/best_practices.mbt.md`
-   - 按顺序运行 `examples/` 的 6 个示例
-   - 查阅 `src/Async_best_practices.mbt` 作为 API 手册
+### Timeout
 
-2. **写业务代码时**：
-   - 复用 `src/Async_best_practices.mbt` 中的封装模式
-   - 使用 `TaskGroup` 管理并发任务
-   - 参考 `examples/` 的组合方式
+`with_timeout_opt[T](timeout_ms: Int, f: async () -> T) -> Option[T]`
+执行异步操作，超时返回 `None`。
 
-3. **代码审查时**：
-   - 对照 `docs/best_practices.mbt.md` 的 PR 检查清单
-   - 确保外部调用都有超时+重试
-   - 确保并发任务都在 TaskGroup 内
-   - 快速查阅：[`docs/quick-reference.md`](docs/quick-reference.md)
-
-## 🔧 如何在你的项目中使用
-
-### 方式 1：复制策略收口层代码
-
-```bash
-# 从 src/Async_best_practices.mbt 中复制以下函数到你的项目：
-# - call_with_timeout_and_retry
-# - call_payment_with_retry（或改为你的业务函数）
-
-# 在你的 moon.pkg.json 中引入
-{
-  "import": ["CGaaaaaa/async-best-practices/src"]
+```moonbit no-check
+let result = @async.with_timeout_opt(500, fn() { slow_operation() })
+match result {
+  Some(v) => println("成功")
+  None => println("超时")
 }
 ```
 
-### 方式 2：作为依赖引入（如果发布到 Mooncakes）
+`with_timeout[T](timeout_ms: Int, f: async () -> T) -> T`
+执行异步操作，超时抛出 `TimeoutError`。
+
+### Retry
+
+`retry[T](method: RetryMethod, f: async () -> T, max_retry?: Int) -> T`
+重试异步操作。
+
+```moonbit no-check
+let value = @async.retry(
+  @async.ExponentialDelay(100, 2.0, 1000),
+  fn() { unreliable_operation() },
+  3
+)
+```
+
+`ExponentialDelay(initial_ms: Int, multiplier: Float, max_ms: Int) -> RetryMethod`
+指数退避重试策略。
+
+`FixedDelay(ms: Int) -> RetryMethod`
+固定延迟重试策略。
+
+### Semaphore
+
+`Semaphore::new(permits: Int) -> Semaphore`
+创建信号量，限制并发数。
+
+```moonbit no-check
+let sem = @semaphore.Semaphore::new(5)
+sem.acquire()  // 获取许可
+try {
+  do_work()
+} finally {
+  sem.release()  // 释放许可
+}
+```
+
+`acquire() -> Unit`
+获取许可，如果没有可用许可则等待。
+
+`release() -> Unit`
+释放许可。
+
+### Queue
+
+`Queue::new[T]() -> Queue[T]`
+创建无界队列。
+
+```moonbit no-check
+let q = @aqueue.Queue::new()
+q.put(item)  // 放入元素
+let item = q.get()  // 获取元素（阻塞）
+```
+
+`put(item: T) -> Unit`
+向队列放入元素。
+
+`get() -> T`
+从队列获取元素，队列为空时阻塞。
+
+## 完整示例
+
+### 订单处理流程
+
+```moonbit no-check
+pub async fn process_orders(order_ids : Array[Int]) -> String {
+  let log = StringBuilder::new()
+  
+  @async.with_task_group(fn(group) {
+    for id in order_ids {
+      group.spawn(fn() {
+        match @src.call_payment_with_retry(id) {
+          Ok(_) => log.write_string("order \{id} success\n")
+          Err(e) => log.write_string("order \{id} failed: \{e}\n")
+        }
+      })
+    }
+  })
+  
+  log.to_string()
+}
+```
+
+### API 网关限流
+
+```moonbit no-check
+pub struct Gateway {
+  limiter : @semaphore.Semaphore
+  mut total_requests : Int
+}
+
+pub fn Gateway::new(max_concurrent : Int) -> Gateway {
+  {
+    limiter: @semaphore.Semaphore::new(max_concurrent),
+    total_requests: 0,
+  }
+}
+
+pub async fn Gateway::handle_request(self : Gateway, req : Request) -> Response {
+  self.limiter.acquire()
+  try {
+    self.total_requests = self.total_requests + 1
+    call_backend(req)
+  } finally {
+    self.limiter.release()
+  }
+}
+```
+
+### 生产者-消费者流水线
+
+```moonbit no-check
+pub async fn pipeline_sum(n : Int, workers : Int) -> Int {
+  let q = @aqueue.Queue::new()
+  let sum = @std.ref::Ref::new(0)
+  
+  @async.with_task_group(fn(group) {
+    // 生产者
+    group.spawn(fn() {
+      for i in 1..=n {
+        q.put(i)
+      }
+    })
+    
+    // 消费者
+    for _ in 0..<workers {
+      group.spawn(fn() {
+        for _ in 0..<n / workers {
+          let item = q.get()
+          sum.update(fn(x) { x + item })
+        }
+      })
+    }
+  })
+  
+  sum.get()
+}
+```
+
+## 设计原理
+
+### 策略收口模式
+
+将超时、重试等策略从业务代码中抽离，统一封装在策略收口层。业务层只关心业务逻辑，策略层负责可靠性保障。
+
+**优势**：
+- 统一调参：所有超时/重试策略集中管理
+- 易于审查：策略变更只需修改一处
+- 业务简洁：业务代码不包含策略细节
+
+### 结构化并发
+
+所有并发任务都在 `TaskGroup` 内创建，确保任务生命周期可控。父任务取消时，子任务自动取消，避免资源泄漏。
+
+**优势**：
+- 取消传播：父任务取消时子任务自动取消
+- 生命周期管理：任务组结束时所有任务完成
+- 错误处理：任务组内任一任务失败可统一处理
+
+### 依赖追踪
+
+`TaskGroup` 使用依赖追踪机制自动管理任务关系：
+- 任务创建时记录父子关系
+- 父任务取消时传播到所有子任务
+- 任务组结束时等待所有任务完成
+
+### 内存管理
+
+- `Queue` 使用无界缓冲，避免背压导致的阻塞
+- `Semaphore` 使用原子操作，避免锁竞争
+- `TaskGroup` 使用弱引用，避免循环依赖导致的内存泄漏
+
+## 仓库结构
+
+```
+Async_best_practices/
+├── src/                       # 策略收口层和 API 示例
+│   ├── Async_best_practices.mbt
+│   └── Async_best_practices_test.mbt
+├── examples/                  # 业务示例
+│   ├── checkout/              # 订单处理
+│   ├── task_group/            # 结构化并发
+│   ├── retry_timeout/         # 超时重试
+│   ├── semaphore_limiter/    # 并发控制
+│   ├── pipeline_queue/        # 生产者-消费者
+│   └── api-gateway/           # API 网关
+└── docs/                      # 文档
+    ├── best_practices.mbt.md
+    ├── quick-reference.md
+    └── faq.md
+```
+
+## 使用方式
+
+在 `moon.pkg.json` 中引入：
 
 ```json
 {
@@ -240,36 +367,30 @@ moon test --target native
 }
 ```
 
-## 📚 延伸阅读
+运行测试：
 
-- [MoonBit Async 官方文档](https://docs.moonbitlang.com/async)
-- [Structured Concurrency 论文](https://en.wikipedia.org/wiki/Structured_concurrency)
-- [moonbitlang/async 源码](https://github.com/moonbitlang/async)
-
-## 🤝 贡献指南
-
-欢迎提交：
-- 🐛 Bug 修复
-- 📝 文档改进
-- 💡 新的示例场景
-- 🧪 测试补充
-
-提交 PR 前请确保：
 ```bash
 moon check --target native
 moon test --target native
-moon fmt  # 格式化代码
 ```
 
-## 📄 许可证
+## 相关资源
 
-本项目采用 [Apache 2.0 许可证](LICENSE)。
+- [MoonBit Async 官方文档](https://docs.moonbitlang.com/async)
+- [Structured Concurrency](https://en.wikipedia.org/wiki/Structured_concurrency)
+- [moonbitlang/async 源码](https://github.com/moonbitlang/async)
 
-## ⭐ Star History
+## 贡献
 
-如果这个项目对你有帮助，请给一个 Star ⭐️
+提交 PR 前请确保：
 
----
+```bash
+moon check --target native
+moon test --target native
+moon fmt
+```
 
-**Made with ❤️ by MoonBit Community**
+## 许可证
+
+[Apache 2.0](LICENSE)
 
