@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install MoonBit
+      uses: moonbitlang/setup-moonbit@v1
+      with:
+        version: latest
+    
+    - name: Update MoonBit registry
+      run: moon update
+    
+    - name: Verify MoonBit installation
+      run: moon --version
+    
+    - name: Build project
+      run: moon build --target native
+    
+    - name: Run tests
+      run: moon test --target native
+
