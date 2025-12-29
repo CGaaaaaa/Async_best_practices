@@ -182,7 +182,7 @@ async fn Gateway::call_product_service(self : Gateway, request : Request) -> Res
 
 ///|
 /// 健康检查
-async fn Gateway::health_check(self : Gateway) -> Response {
+fn Gateway::health_check(self : Gateway) -> Response {
   let success_rate = if self.total_requests == 0 {
     100
   } else {

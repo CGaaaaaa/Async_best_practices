@@ -31,6 +31,22 @@ jobs:
           rm -rf target/ .mooncakes/ || true
       
       - name: Run tests
-        run: moon test --target native
+        run: |
+          # 运行测试并捕获输出
+          moon test --target native --no-render 2>&1 | tee test_output.log || true
+          
+          # 检查测试结果
+          if grep -q "Total tests:.*passed:.*failed: 0" test_output.log; then
+            echo "✅ All tests passed!"
+            exit 0
+          elif grep -q "failed: [1-9]" test_output.log; then
+            echo "❌ Tests failed!"
+            cat test_output.log
+            exit 1
+          else
+            echo "⚠️  Unknown test status, showing output:"
+            cat test_output.log
+            exit 1
+          fi
 
 
