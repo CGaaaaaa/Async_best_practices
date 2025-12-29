@@ -5,7 +5,7 @@
 /// 启动 `jobs` 个任务，每个任务会占用一段时间的“资源”。
 /// 返回运行过程中观测到的最大并发数（应 <= limit）。
 pub async fn max_concurrency_observed(limit : Int, jobs : Int) -> Int {
-  let sem = @semaphore.Semaphore::new(limit)
+  let sem = @async.Semaphore::new(limit)
   let in_flight = @ref.new(0)
   let max_seen = @ref.new(0)
   @async.with_task_group(fn(group) {
