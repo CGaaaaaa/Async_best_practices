@@ -542,7 +542,7 @@ pub async fn demo_with_timeout_opt() -> String {
 pub async fn demo_queue_pipeline() -> String {
   let log = StringBuilder::new()
   @async.with_task_group(fn(root) {
-    let q = @aqueue.Queue::new()
+    let q = @aqueue.Queue::new(kind=@aqueue.Unbounded)
     // producer
     root.spawn_bg(async fn() {
       for i in 0..<3 {
@@ -664,7 +664,7 @@ pub async fn demo_semaphore_try_acquire() -> String {
 pub async fn demo_queue_mpmc() -> String {
   let log = StringBuilder::new()
   @async.with_task_group(fn(root) {
-    let q = @aqueue.Queue::new()
+    let q = @aqueue.Queue::new(kind=@aqueue.Unbounded)
     // producer 0 produces 0,2,4
     root.spawn_bg(async fn() {
       for i in 0..<3 {
@@ -905,7 +905,7 @@ pub async fn demo_retry_fatal_error() -> String {
 pub async fn demo_queue_try_get_nonblocking() -> String {
   let log = StringBuilder::new()
   @async.with_task_group(fn(root) {
-    let q = @aqueue.Queue::new()
+    let q = @aqueue.Queue::new(kind=@aqueue.Unbounded)
     // producer fills three values with gaps
     root.spawn_bg(async fn() {
       for i in 0..<3 {
