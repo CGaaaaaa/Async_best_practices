@@ -1,0 +1,14 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CGaaaaaa/async-best-practices/examples/pipeline_queue"
+
+// Values
+pub async fn pipeline_sum(Int, Int) -> Int
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,54 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CGaaaaaa/async-best-practices/examples/api-gateway"
+
+import(
+  "moonbitlang/async/semaphore"
+)
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct Gateway {
+  config : GatewayConfig
+  limiter : @semaphore.Semaphore
+  mut total_requests : Int
+  mut successful_requests : Int
+  mut failed_requests : Int
+}
+pub fn Gateway::get_stats(Self) -> String
+pub async fn Gateway::handle_batch_requests(Self, Array[Request]) -> Array[Response]
+pub async fn Gateway::handle_request(Self, Request) -> Response
+pub fn Gateway::new(GatewayConfig) -> Self
+
+pub struct GatewayConfig {
+  max_concurrent_requests : Int
+  request_timeout_ms : Int
+  enable_retry : Bool
+}
+pub fn GatewayConfig::default() -> Self
+pub fn GatewayConfig::new(Int, Int, Bool) -> Self
+pub impl Show for GatewayConfig
+
+pub struct Request {
+  path : String
+  http_method : String
+  body : String
+}
+pub fn Request::new(String, String, String) -> Self
+pub impl Eq for Request
+pub impl Show for Request
+
+pub struct Response {
+  status : Int
+  body : String
+}
+pub fn Response::new(Int, String) -> Self
+pub impl Eq for Response
+pub impl Show for Response
+
+// Type aliases
+
+// Traits
+

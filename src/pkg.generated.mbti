@@ -1,26 +1,68 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "CGaaaaaa/async-best-practices"
+package "CGaaaaaa/async-best-practices/src"
+
+import(
+  "moonbitlang/async"
+)
 
 // Values
-async fn batch_processing() -> Array[Int]
+pub async fn batch_processing() -> Array[Int]
 
-async fn concurrent_tasks() -> Array[Int]
+pub async fn call_payment_with_retry(Int) -> Result[String, String]
 
-async fn error_handling_example() -> String
+pub async fn[X] call_with_timeout_and_retry(Int, @async.RetryMethod, async () -> X, max_retry? : Int) -> Result[X, String]
 
-async fn hello_async() -> String
+pub async fn concurrent_tasks() -> Array[Int]
 
-async fn race_example() -> String
+pub async fn demo_business_checkout_flow() -> String
 
-async fn retry_example() -> Result[String, String]
+pub async fn demo_group_defer() -> String
 
-async fn sequential_pipeline() -> Int
+pub async fn demo_protect_from_cancel() -> String
 
-async fn timeout_example() -> String
+pub async fn demo_queue_mpmc() -> String
+
+pub async fn demo_queue_pipeline() -> String
+
+pub async fn demo_queue_try_get_nonblocking() -> String
+
+pub async fn demo_retry_exponential() -> String
+
+pub async fn demo_retry_fatal_error() -> String
+
+pub async fn demo_retry_fixed() -> String
+
+pub async fn demo_retry_immediate() -> String
+
+pub async fn demo_semaphore() -> String
+
+pub async fn demo_semaphore_try_acquire() -> String
+
+pub async fn demo_spawn() -> String
+
+pub async fn demo_spawn_loop_retry_exponential() -> String
+
+pub async fn demo_task_wait_and_try_wait() -> String
+
+pub async fn demo_with_timeout() -> String
+
+pub async fn demo_with_timeout_opt() -> String
+
+pub async fn error_handling_example() -> String
+
+pub async fn hello_async() -> String
+
+pub async fn race_example() -> String
+
+pub async fn retry_example() -> Result[String, String]
+
+pub async fn sequential_pipeline() -> Int
+
+pub async fn timeout_example() -> String
 
 // Errors
 pub suberror CustomTaskError
-impl Show for CustomTaskError
+pub impl Show for CustomTaskError
 
 // Types and methods
 

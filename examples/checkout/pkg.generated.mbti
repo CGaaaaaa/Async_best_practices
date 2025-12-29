@@ -1,0 +1,14 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CGaaaaaa/async-best-practices/examples/checkout"
+
+// Values
+pub async fn checkout_orders(Array[Int]) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

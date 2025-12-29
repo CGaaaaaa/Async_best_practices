@@ -1,0 +1,16 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CGaaaaaa/async-best-practices/examples/task_group"
+
+// Values
+pub async fn fail_fast_cancels_sibling() -> Bool
+
+pub async fn sum_two_tasks() -> Int
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
