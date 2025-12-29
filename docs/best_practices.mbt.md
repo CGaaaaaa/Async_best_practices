@@ -3,11 +3,9 @@ name: async-best-practices-guide
 description: Best practices for MoonBit Async library. Learn structured concurrency, timeout/retry patterns, semaphore rate limiting, queue pipelines, and error handling strategies.
 ---
 
-## MoonBit Async 最佳实践（面向业务开发）
+## MoonBit Async 最佳实践
 
-> 本文档提供**可执行的原则**：每条规则都配有正例/反例代码对比，以及实际场景说明。
-
-本仓库的目标是：让程序员或 AI **通过阅读 + 运行代码**，快速掌握 `moonbitlang/async` 的高效用法，并能把这些模式迁移到真实业务。
+本文档提供可执行的原则，每条规则都配有正例/反例代码对比。
 
 ---
 
@@ -27,7 +25,7 @@ description: Best practices for MoonBit Async library. Learn structured concurre
 
 ---
 
-## 0. 总原则（评审时逐条对照）
+## 0. 总原则
 
 | 原则 | 说明 | 检查方法 |
 |------|------|----------|
@@ -39,65 +37,21 @@ description: Best practices for MoonBit Async library. Learn structured concurre
 
 ---
 
-## 1. 推荐的学习路径
+## 1. API 索引
 
-### 核心概念
+| 主题 | API/函数 | 位置 |
+|------|---------|------|
+| **超时** | `with_timeout_opt`, `with_timeout` | `src/Async_best_practices.mbt`: `hello_async`, `timeout_example` |
+| **结构化并发** | `with_task_group`, `spawn`, `spawn_bg` | `src/Async_best_practices.mbt`: `concurrent_tasks`, `demo_spawn` |
+| **重试** | `retry`, `ExponentialDelay`, `FixedDelay` | `src/Async_best_practices.mbt`: `call_with_timeout_and_retry` |
+| **限流** | `Semaphore::new`, `acquire`, `try_acquire` | `src/Async_best_practices.mbt`: `demo_semaphore` |
+| **队列** | `Queue::new`, `put`, `get` | `src/Async_best_practices.mbt`: `demo_queue_pipeline` |
 
-1. **业务与 infra 分层**：查看 [`examples/README.md`](../examples/README.md) 中的 checkout 示例
-2. **结构化并发**：查看 [`examples/README.md`](../examples/README.md) 中的 task_group 示例
-3. **超时与重试**：查看 [`examples/README.md`](../examples/README.md) 中的 retry_timeout 示例
+运行所有示例：
 
-### 并发控制
-
-1. **限流**：查看 [`examples/README.md`](../examples/README.md) 中的 semaphore_limiter 示例
-2. **队列与流水线**：查看 [`examples/README.md`](../examples/README.md) 中的 pipeline_queue 示例
-
-### API 参考与最佳实践
-
-1. **API 示例**：运行 `moon test --target native src/` 查看所有 API 示例
-2. **完整原则**：阅读本文档，逐条理解并对照项目代码检查
-
-### 主题对照索引（需要查找某个 API 时使用）
-
-#### 超时
-
-- **基础用法**：
-  - `src/Async_best_practices.mbt`: `hello_async`, `timeout_example`
-  - 示例：`examples/retry_timeout`
-- **返回 Option vs 抛出异常**：
-  - `demo_with_timeout`（抛出 `Failure`）
-  - `demo_with_timeout_opt`（返回 `None`）
-
-#### 结构化并发 / TaskGroup
-
-- **基础用法**：
-  - `src/Async_best_practices.mbt`: `concurrent_tasks`, `demo_spawn`
-  - 示例：`examples/task_group`
-- **fail-fast 取消传播**：
-  - `examples/task_group`: `fail_fast_cancels_sibling`
-
-#### 重试
-
-- **固定延迟 vs 指数退避**：
-  - `demo_retry_fixed_delay`（每次等待 100ms）
-  - `demo_retry_exponential`（100ms → 200ms → 400ms）
-- **瞬态失败重试**：
-  - `src/Async_best_practices.mbt`: `call_with_timeout_and_retry`
-  - `examples/retry_timeout`: `retry_then_ok`
-
-#### 限流（Semaphore）
-
-- **阻塞获取**：
-  - `demo_semaphore`（`acquire()` 阻塞等待）
-  - `examples/semaphore_limiter`: `max_concurrency_observed`
-- **非阻塞获取**：
-  - `demo_semaphore_try_acquire`（`try_acquire()` 立即返回 `Option`）
-
-#### 队列/流水线（Queue）
-
-- **生产者-消费者**：
-  - `demo_queue_pipeline`
-  - `examples/pipeline_queue`: `pipeline_sum`
+```bash
+moon test --target native src/
+```
 
 ---
 
@@ -739,7 +693,7 @@ async test "retry_then_success" {
 
 ---
 
-## 9. PR 检查清单（上线必备）
+## 9. PR 检查清单
 
 在提交 PR 前，逐条检查：
 
@@ -859,8 +813,6 @@ validate_input(data) raise { err => return Err(err) }
 - ✅ **高性能**：结构化并发 + 限流，充分利用资源
 
 **下一步**：
-1. 跑通所有 `examples/`
-2. 用 PR 检查清单审查你的代码
-3. 从 `src/Async_best_practices.mbt` 复制策略收口层代码到你的项目
-
-Happy Async Programming! 🚀
+1. 运行所有 `examples/` 示例
+2. 用 PR 检查清单审查代码
+3. 从 `src/Async_best_practices.mbt` 复制策略收口层代码到项目

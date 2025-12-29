@@ -1,6 +1,6 @@
 # 常见问题（FAQ）
 
-> 本文档回答开发者在使用 MoonBit Async 时最常遇到的问题，按主题分类。
+开发者在使用 MoonBit Async 时最常遇到的问题，按主题分类。
 
 ---
 
@@ -609,12 +609,11 @@ fn my_function() -> Int raise {
 
 ## 更多资源
 
-### 推荐阅读顺序
+### 相关文档
 
-1. **业务与 infra 分层**：查看 [examples/README.md](../examples/README.md) 中的 checkout 示例
-2. **完整指南**：[最佳实践](./best_practices.mbt.md)
-3. **API 参考**：[快速参考](./quick-reference.md)
-4. **运行示例**：`moon test --target native src/` 查看所有 API 示例
+- [最佳实践](./best_practices.mbt.md) - 完整指南
+- [快速参考](./quick-reference.md) - API 速查
+- [示例代码](../examples/) - 可运行示例
 
 ### 获取帮助
 
@@ -624,8 +623,5 @@ fn my_function() -> Int raise {
 
 ---
 
-**FAQ 更新时间**: 2025-12-28  
 **问题总数**: 28 个
-
-有新问题？欢迎提交 Issue 或 PR！
 
