@@ -2,7 +2,7 @@
   "name": "CGaaaaaa/async-best-practices",
   "version": "0.1.0",
   "deps": {
-    "moonbitlang/async": "*"
+    "moonbitlang/async": "0.15.0"
   },
   "readme": "README.md",
   "repository": "https://github.com/CGaaaaaa/Async_best_practices",

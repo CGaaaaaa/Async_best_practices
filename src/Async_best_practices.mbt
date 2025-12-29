@@ -14,7 +14,7 @@
 /// // result 将是 "Hello, Async!" 因为 50ms < 100ms
 /// ```
 pub async fn hello_async() -> String {
-  let result = @async.with_timeout_opt(100, fn() {
+  let result = @async.with_timeout_opt(100, async fn() {
     @async.sleep(50)
     "Hello, Async!"
   })
@@ -76,7 +76,7 @@ pub async fn concurrent_tasks() -> Array[Int] {
 /// // result = "Task timed out after 50ms"
 /// ```
 pub async fn timeout_example() -> String {
-  let result = @async.with_timeout_opt(50, fn() {
+  let result = @async.with_timeout_opt(50, async fn() {
     @async.sleep(100) // 这个会超时
     "Completed"
   })
@@ -355,11 +355,11 @@ pub async fn demo_with_timeout() -> String {
   let log = StringBuilder::new()
   log.write_object(
     try? @async.with_task_group(fn(root) {
-      root.spawn_bg(fn() {
+      root.spawn_bg(async fn() {
         @async.sleep(300)
         log.write_string("300ms tick\n")
       })
-      @async.with_timeout(200, fn() {
+      @async.with_timeout(200, async fn() {
         @async.sleep(400) catch {
           _ => log.write_string("task cancelled\n")
         }
@@ -392,9 +392,9 @@ pub async fn demo_with_timeout() -> String {
 pub async fn demo_semaphore() -> String {
   let log = StringBuilder::new()
   @async.with_task_group(fn(root) {
-    let semaphore = @semaphore.Semaphore::new(2)
+    let semaphore = @async.Semaphore::new(2)
     for i in 0..<6 {
-      root.spawn_bg(fn() {
+      root.spawn_bg(async fn() {
         semaphore.acquire()
         log.write_string("task \{i} obtained resource\n")
         @async.sleep(200)
@@ -474,7 +474,7 @@ pub async fn demo_retry_fixed() -> String {
   let log = StringBuilder::new()
   @async.with_task_group(fn(root) {
     // timeline logger to visualize delays
-    root.spawn_bg(fn() {
+    root.spawn_bg(async fn() {
       for i in 0..<3 {
         @async.sleep(200)
         log.write_string("tick \{i}\n")
@@ -482,7 +482,7 @@ pub async fn demo_retry_fixed() -> String {
     })
     @async.sleep(100)
     let mut i = 0
-    @async.retry(FixedDelay(200), fn() {
+    @async.retry(FixedDelay(200), async fn() raise {
       log.write_string("loop \{i}\n")
       i = i + 1
       if i < 3 {
@@ -511,7 +511,7 @@ pub async fn demo_retry_fixed() -> String {
 /// ```
 pub async fn demo_with_timeout_opt() -> String {
   let log = StringBuilder::new()
-  let out = @async.with_timeout_opt(200, fn() {
+  let out = @async.with_timeout_opt(200, async fn() {
     @async.sleep(300)
     "done"
   })
@@ -544,7 +544,7 @@ pub async fn demo_queue_pipeline() -> String {
   @async.with_task_group(fn(root) {
     let q = @aqueue.Queue::new()
     // producer
-    root.spawn_bg(fn() {
+    root.spawn_bg(async fn() {
       for i in 0..<3 {
         q.put(i)
         log.write_string("produced \{i}\n")
@@ -552,7 +552,7 @@ pub async fn demo_queue_pipeline() -> String {
       }
     })
     // consumer
-    root.spawn_bg(fn() {
+    root.spawn_bg(async fn() {
       for _ in 0..<3 {
         let v = q.get()
         log.write_string("consumed \{v}\n")
@@ -584,7 +584,7 @@ pub async fn demo_retry_exponential() -> String {
   let log = StringBuilder::new()
   log.write_object(
     try? @async.with_task_group(fn(root) {
-      root.spawn_bg(fn() {
+      root.spawn_bg(async fn() {
         for i in 0..<7 {
           @async.sleep(200)
           log.write_string("tick \{i}\n")
@@ -592,7 +592,7 @@ pub async fn demo_retry_exponential() -> String {
       })
       @async.sleep(100)
       let mut i = 0
-      @async.retry(ExponentialDelay(initial=200, factor=2, maximum=600), fn() {
+      @async.retry(ExponentialDelay(initial=200, factor=2, maximum=600), async fn() raise {
         log.write_string("loop \{i}\n")
         i = i + 1
         if i < 4 {
@@ -627,7 +627,7 @@ pub async fn demo_semaphore_try_acquire() -> String {
   @async.with_task_group(fn(root) {
     let semaphore = @semaphore.Semaphore::new(1)
     // occupy once so try_acquire initially fails
-    root.spawn_bg(fn() {
+    root.spawn_bg(async fn() {
       semaphore.acquire()
       log.write_string("occupied\n")
       @async.sleep(300)
@@ -666,7 +666,7 @@ pub async fn demo_queue_mpmc() -> String {
   @async.with_task_group(fn(root) {
     let q = @aqueue.Queue::new()
     // producer 0 produces 0,2,4
-    root.spawn_bg(fn() {
+    root.spawn_bg(async fn() {
       for i in 0..<3 {
         let v = i * 2
         q.put(v)
@@ -675,7 +675,7 @@ pub async fn demo_queue_mpmc() -> String {
       }
     })
     // producer 1 produces 1,3,5, staggered to interleave
-    root.spawn_bg(fn() {
+    root.spawn_bg(async fn() {
       @async.sleep(50)
       for i in 0..<3 {
         let v = i * 2 + 1
@@ -685,13 +685,13 @@ pub async fn demo_queue_mpmc() -> String {
       }
     })
     // two consumers; we only assert FIFO of values, not consumer id
-    root.spawn_bg(fn() {
+    root.spawn_bg(async fn() {
       for _ in 0..<3 {
         let v = q.get()
         log.write_string("consumed \{v}\n")
       }
     })
-    root.spawn_bg(fn() {
+    root.spawn_bg(async fn() {
       for _ in 0..<3 {
         let v = q.get()
         log.write_string("consumed \{v}\n")
@@ -837,7 +837,7 @@ pub async fn demo_group_defer() -> String {
 pub async fn demo_retry_immediate() -> String {
   let log = StringBuilder::new()
   let mut i = 0
-  @async.retry(Immediate, fn() {
+  @async.retry(Immediate, async fn() raise {
     log.write_string("tick \{i}\n")
     i = i + 1
     if i < 3 {
@@ -875,7 +875,7 @@ pub async fn demo_retry_fatal_error() -> String {
     log.write_string("worker run #\{i}\n")
     i = i + 1
     if i < 3 {
-      @async.with_timeout(100, () => @async.sleep(1000))
+      @async.with_timeout(100, async fn() { @async.sleep(1000) })
     } else {
       raise Failure("fatal error")
     }
@@ -907,7 +907,7 @@ pub async fn demo_queue_try_get_nonblocking() -> String {
   @async.with_task_group(fn(root) {
     let q = @aqueue.Queue::new()
     // producer fills three values with gaps
-    root.spawn_bg(fn() {
+    root.spawn_bg(async fn() {
       for i in 0..<3 {
         @async.sleep(120)
         q.put(i)
@@ -915,7 +915,7 @@ pub async fn demo_queue_try_get_nonblocking() -> String {
       }
     })
     // consumer: prefer non阻塞读取，若为空则短暂让出
-    root.spawn_bg(fn() {
+    root.spawn_bg(async fn() {
       let mut consumed = 0
       while consumed < 3 {
         match q.try_get() {
@@ -961,11 +961,11 @@ pub async fn demo_business_checkout_flow() -> String {
 
   for order_id in orders {
     log.write_string("start order \{order_id}\n")
-    let outcome = @async.with_timeout_opt(500, fn() {
+    let outcome = @async.with_timeout_opt(500, async fn() raise {
       let mut attempt = 0
       @async.retry(
         ExponentialDelay(initial=50, factor=2, maximum=200),
-        fn() {
+        async fn() raise {
           log.write_string("order \{order_id} attempt \{attempt}\n")
           attempt = attempt + 1
           // 模拟瞬态失败：前几次抛出 Failure，最终成功
@@ -1004,7 +1004,7 @@ pub async fn[X] call_with_timeout_and_retry(
   max_retry? : Int,
 ) -> Result[X, String] {
   try {
-    let out = @async.with_timeout_opt(timeout_ms, fn() {
+    let out = @async.with_timeout_opt(timeout_ms, async fn() {
       @async.retry(retry, f, max_retry?)
     })
     match out {

@@ -7,7 +7,7 @@
 ///|
 /// 把 1..=n 放入队列，启动 `workers` 个消费者并行消费并求和。
 pub async fn pipeline_sum(n : Int, workers : Int) -> Int {
-  let q : @async.Queue[Int] = @async.Queue::new()
+  let q : @aqueue.Queue[Int] = @aqueue.Queue::new()
   @async.with_task_group(fn(group) {
     // producer
     group.spawn_bg(fn() {
