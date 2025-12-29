@@ -1,8 +1,7 @@
 {
   "import": [
     "CGaaaaaa/async-best-practices/src",
-    "moonbitlang/async",
-    "moonbitlang/async/semaphore"
+    "moonbitlang/async"
   ],
   "test-import": [
     "moonbitlang/async"

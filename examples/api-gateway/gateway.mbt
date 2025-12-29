@@ -59,7 +59,7 @@ pub fn GatewayConfig::default() -> GatewayConfig {
 /// API 网关
 pub struct Gateway {
   config : GatewayConfig
-  limiter : @semaphore.Semaphore
+  limiter : @async.Semaphore
   mut total_requests : Int
   mut successful_requests : Int
   mut failed_requests : Int
@@ -70,7 +70,7 @@ pub struct Gateway {
 pub fn Gateway::new(config : GatewayConfig) -> Gateway {
   {
     config,
-    limiter: @semaphore.Semaphore::new(config.max_concurrent_requests),
+    limiter: @async.Semaphore::new(config.max_concurrent_requests),
     total_requests: 0,
     successful_requests: 0,
     failed_requests: 0,
