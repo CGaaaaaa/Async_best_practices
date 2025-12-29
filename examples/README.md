@@ -297,6 +297,3 @@ moon test --target native
 ## 相关文档
 
 - [主 README](../README.mbt.md) - 项目概览
-- [最佳实践](../docs/best_practices.mbt.md) - 完整指南
-- [快速参考](../docs/quick-reference.md) - API 速查
-- [FAQ](../docs/faq.md) - 常见问题

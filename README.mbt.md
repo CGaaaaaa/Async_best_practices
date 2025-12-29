@@ -341,17 +341,13 @@ Async_best_practices/
 ├── src/                       # 策略收口层和 API 示例
 │   ├── Async_best_practices.mbt
 │   └── Async_best_practices_test.mbt
-├── examples/                  # 业务示例
-│   ├── checkout/              # 订单处理
-│   ├── task_group/            # 结构化并发
-│   ├── retry_timeout/         # 超时重试
-│   ├── semaphore_limiter/    # 并发控制
-│   ├── pipeline_queue/        # 生产者-消费者
-│   └── api-gateway/           # API 网关
-└── docs/                      # 文档
-    ├── best_practices.mbt.md
-    ├── quick-reference.md
-    └── faq.md
+└── examples/                  # 业务示例
+    ├── checkout/              # 订单处理
+    ├── task_group/            # 结构化并发
+    ├── retry_timeout/         # 超时重试
+    ├── semaphore_limiter/    # 并发控制
+    ├── pipeline_queue/        # 生产者-消费者
+    └── api-gateway/           # API 网关
 ```
 
 ## 使用方式
